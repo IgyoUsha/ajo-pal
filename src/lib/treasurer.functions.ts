@@ -4,7 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { collectorFor, currentMonth, formatNaira, monthLabel } from "./ajo";
 
-type Action = "log_payment" | "answer" | "flag_defaulters" | "draft_rules";
+type Action = "request_payment_link" | "claim_payment" | "answer" | "flag_defaulters" | "draft_rules";
 
 function db() {
   const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
@@ -29,7 +29,7 @@ export function parseModelJson(raw: string): { action: Action; member: string | 
   if (s === -1 || e === -1) return null;
   try {
     const o = JSON.parse(t.slice(s, e + 1));
-    const actions: Action[] = ["log_payment", "answer", "flag_defaulters", "draft_rules"];
+    const actions: Action[] = ["request_payment_link", "claim_payment", "answer", "flag_defaulters", "draft_rules"];
     if (!actions.includes(o.action) || typeof o.reply !== "string") return null;
     return {
       action: o.action,
@@ -61,9 +61,11 @@ export const askTreasurer = createServerFn({ method: "POST" })
 
     await sb.from("chat_messages").insert({ group_id: group.id, role: "user", content: data.message });
 
-    const paidIds = new Set(contribs.map((x) => x.member_id));
+    const confirmed = contribs.filter((x) => x.status === "confirmed");
+    const paidIds = new Set(confirmed.map((x) => x.member_id));
+    const pendingIds = new Set(contribs.filter((x) => x.status === "pending").map((x) => x.member_id));
     const collector = collectorFor(members, group.start_month, month);
-    const total = contribs.reduce((s, x) => s + Number(x.amount), 0);
+    const total = confirmed.reduce((s, x) => s + Number(x.amount), 0);
     const ledger = {
       group: group.name,
       month: monthLabel(month),
@@ -72,6 +74,7 @@ export const askTreasurer = createServerFn({ method: "POST" })
       payout_order: members.map((x) => `${x.payout_order}. ${x.name}`),
       paid_this_month: members.filter((x) => paidIds.has(x.id)).map((x) => x.name),
       not_paid_this_month: members.filter((x) => !paidIds.has(x.id)).map((x) => x.name),
+      pending_claims_awaiting_verification: members.filter((x) => !paidIds.has(x.id) && pendingIds.has(x.id)).map((x) => x.name),
       pot_total_this_month: formatNaira(total),
       expected_pot: formatNaira(Number(group.monthly_amount) * members.length),
     };
@@ -82,11 +85,13 @@ Current ledger (source of truth):
 ${JSON.stringify(ledger, null, 2)}
 
 Reply ONLY with a single JSON object, no other text:
-{"action": "log_payment" | "answer" | "flag_defaulters" | "draft_rules", "member": string | null, "amount": number | null, "reply": string}
+{"action": "request_payment_link" | "claim_payment" | "answer" | "flag_defaulters" | "draft_rules", "member": string | null, "amount": number | null, "reply": string}
 
 Rules:
-- log_payment: the user says a member paid. Set "member" to the member name and "amount" to a number in Naira (if they don't state an amount, use the monthly amount). "reply" is a short cheerful confirmation.
-- flag_defaulters: the user asks who hasn't paid. "reply" is a kind nudge.
+- You can NEVER confirm money yourself. Only a signed Paystack payment confirms a contribution.
+- request_payment_link: someone wants to pay ("I want to pay", "send me the link", "pay for Chidi"). Set "member" to the member's name, "amount" null. "reply" is a short cheerful line introducing the payment link.
+- claim_payment: someone says a member already paid by cash/transfer ("Chidi paid cash"). Set "member". "reply" says it's recorded as AWAITING CONFIRMATION and won't count toward the pot until verified.
+- flag_defaulters: the user asks who hasn't paid. "reply" is a kind nudge; mention anyone with a pending claim separately.
 - draft_rules: the user asks for group rules/constitution. "reply" is a short markdown constitution covering: contribution deadline, late payment penalty, what happens if someone leaves service early, and dispute resolution.
 - answer: anything else, e.g. whose turn it is. Answer from the ledger.
 - Never invent members. Keep replies concise.`;
@@ -134,39 +139,72 @@ Rules:
 
     let action: Action = "answer";
     let reply: string;
-    let extra: { defaulters?: string[]; logged?: { member: string; amount: number } } = {};
+    const extra: { defaulters?: string[]; pending?: string[] } = {};
 
     if (modelError) reply = modelError;
     else if (!parsed) reply = "Sorry, I got a little muddled there 🙈 Could you say that again in a different way?";
     else {
       reply = parsed.reply;
-      if (parsed.action === "log_payment") {
-        const mem = members.find((x) => x.name.trim().toLowerCase() === (parsed!.member ?? "").trim().toLowerCase());
-        const amt = parsed.amount;
-        if (!mem) {
-          reply = `Hmm, I couldn't find ${parsed.member ? `"${parsed.member}"` : "that person"} in the group 🤔 Our members are ${members.map((x) => x.name).join(", ")}. Who paid?`;
-        } else if (amt == null || !Number.isFinite(amt) || amt <= 0) {
-          reply = `How much did ${mem.name} pay? Just give me a positive amount, like ₦10,000.`;
+      const mem = parsed.member
+        ? members.find((x) => x.name.trim().toLowerCase() === parsed!.member!.trim().toLowerCase())
+        : undefined;
+      const notFound = `Hmm, I couldn't find ${parsed.member ? `"${parsed.member}"` : "that person"} in the group 🤔 Our members are ${members.map((x) => x.name).join(", ")}. Who is it?`;
+      if (parsed.action === "request_payment_link" || parsed.action === "claim_payment") {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const amt = Number(group.monthly_amount);
+        if (!mem) reply = notFound;
+        else if (paidIds.has(mem.id)) reply = `Good news — ${mem.name} is already verified as paid for ${monthLabel(month)} ✅ Nothing more to do!`;
+        else if (parsed.action === "claim_payment") {
+          if (pendingIds.has(mem.id)) reply = `${mem.name} already has a claim awaiting confirmation ⏳ Hang tight!`;
+          else {
+            const ins = await supabaseAdmin.from("contributions").insert({ member_id: mem.id, group_id: group.id, month, amount: amt, status: "pending", source: "claim" });
+            if (ins.error) {
+              console.error(ins.error);
+              reply = "I couldn't note that claim just now. Please try again.";
+            } else {
+              action = "claim_payment";
+              reply = `${parsed.reply}\n\n⏳ **AWAITING CONFIRMATION** — ${mem.name}'s claim doesn't count toward the pot until it's verified.`;
+            }
+          }
         } else {
-          const ins = await sb.from("contributions").insert({ member_id: mem.id, group_id: group.id, month, amount: amt });
-          if (ins.error) {
-            console.error(ins.error);
-            reply = "I couldn't write that to the ledger just now. Please try again.";
-          } else {
-            action = "log_payment";
-            extra.logged = { member: mem.name, amount: amt };
-            paidIds.add(mem.id);
+          const secret = process.env["PAYSTACK_SECRET_KEY"];
+          if (!secret) reply = "Payments aren't switched on yet 🔌 — the group admin needs to add the PAYSTACK_SECRET_KEY secret.";
+          else if (!secret.startsWith("sk_test_")) reply = "For safety I only work with Paystack TEST keys 🧪 — please use an sk_test_ key.";
+          else {
+            const reference = `ajo_${crypto.randomUUID().replace(/-/g, "")}`;
+            const slug = mem.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "member";
+            const att = await supabaseAdmin.from("payment_attempts").insert({ group_id: group.id, member_id: mem.id, month, amount: amt, reference });
+            let url: string | null = null;
+            if (!att.error) {
+              try {
+                const r = await fetch("https://api.paystack.co/transaction/initialize", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", Authorization: `Bearer ${secret}` },
+                  body: JSON.stringify({ amount: Math.round(amt * 100), email: `${slug}@ajocorps.demo`, reference, metadata: { group_id: group.id, member_id: mem.id, month } }),
+                });
+                const j = await r.json();
+                if (r.ok && j?.status) url = j.data?.authorization_url ?? null;
+                else console.error("Paystack init error", r.status, j);
+              } catch (e) {
+                console.error(e);
+              }
+            } else console.error(att.error);
+            if (!url) reply = "I couldn't create a payment link just now 😕 Please try again in a moment.";
+            else {
+              action = "request_payment_link";
+              reply = `${parsed.reply}\n\nPAYLINK|${amt}|${mem.name}|${url}`;
+            }
           }
         }
       } else if (parsed.action === "flag_defaulters") {
         action = "flag_defaulters";
         extra.defaulters = members.filter((x) => !paidIds.has(x.id)).map((x) => x.name);
+        extra.pending = members.filter((x) => !paidIds.has(x.id) && pendingIds.has(x.id)).map((x) => x.name);
       } else {
         action = parsed.action;
       }
     }
 
-    const allPaid = members.length > 0 && members.every((x) => paidIds.has(x.id));
     await sb.from("chat_messages").insert({ group_id: group.id, role: "assistant", content: reply, action });
-    return { reply, action, allPaid, ...extra };
+    return { reply, action, ...extra };
   });
