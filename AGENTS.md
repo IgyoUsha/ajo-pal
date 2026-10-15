@@ -8,3 +8,6 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- AI treasurer logic lives in a server function (src/lib/treasurer.functions.ts), not an edge function: the model only proposes an action, server code validates and writes the ledger.
+- Prototype has no auth; tables use open anon read/insert policies — tighten before real use.
