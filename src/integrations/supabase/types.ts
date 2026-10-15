@@ -14,7 +14,136 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chat_messages: {
+        Row: {
+          action: string | null
+          content: string
+          created_at: string
+          group_id: string
+          id: string
+          role: string
+        }
+        Insert: {
+          action?: string | null
+          content: string
+          created_at?: string
+          group_id: string
+          id?: string
+          role: string
+        }
+        Update: {
+          action?: string | null
+          content?: string
+          created_at?: string
+          group_id?: string
+          id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contributions: {
+        Row: {
+          amount: number
+          created_at: string
+          group_id: string
+          id: string
+          member_id: string
+          month: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          group_id: string
+          id?: string
+          member_id: string
+          month: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          group_id?: string
+          id?: string
+          member_id?: string
+          month?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contributions_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contributions_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      groups: {
+        Row: {
+          created_at: string
+          id: string
+          monthly_amount: number
+          name: string
+          start_month: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          monthly_amount: number
+          name: string
+          start_month: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          monthly_amount?: number
+          name?: string
+          start_month?: string
+        }
+        Relationships: []
+      }
+      members: {
+        Row: {
+          group_id: string
+          id: string
+          name: string
+          payout_order: number
+        }
+        Insert: {
+          group_id: string
+          id?: string
+          name: string
+          payout_order: number
+        }
+        Update: {
+          group_id?: string
+          id?: string
+          name?: string
+          payout_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
