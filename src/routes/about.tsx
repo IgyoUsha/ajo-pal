@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { AI_PROVIDER } from "@/config/ai";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
@@ -6,7 +7,7 @@ export const Route = createFileRoute("/about")({
       { title: "About AjoCorps — open-source AI treasurer" },
       { name: "description", content: "Why AjoCorps uses an open-weight model for community savings groups." },
       { property: "og:title", content: "About AjoCorps" },
-      { property: "og:description", content: "An open-source AI treasurer for NYSC ajo groups, powered by Qwen3-32B." },
+      { property: "og:description", content: `An open-source AI treasurer for NYSC ajo groups, powered by ${AI_PROVIDER.modelName}.` },
     ],
   }),
   component: About,
@@ -25,7 +26,7 @@ function About() {
       <section className="card-soft p-5">
         <h2 className="text-lg font-bold">🧠 Powered by open AI</h2>
         <p className="mt-1 text-muted-foreground">
-          Powered by an open-weight model (Qwen3-32B) on DigitalOcean serverless inference. The model only decides what to do —
+          Powered by an open-weight model ({AI_PROVIDER.modelName}) via {AI_PROVIDER.providerName}. The model only decides what to do —
           our code checks every request before anything touches the ledger.
         </p>
       </section>

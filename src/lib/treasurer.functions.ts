@@ -1,3 +1,19 @@
+// ============================================================================
+// AI treasurer — provider is configurable via secrets, no code change needed.
+// Set these three secrets (Project Settings → Secrets):
+//   AI_BASE_URL  — OpenAI-compatible base URL, e.g.:
+//                  Groq:        https://api.groq.com/openai/v1
+//                  DigitalOcean Gradient serverless inference:
+//                               https://inference.do-ai.run/v1
+//   AI_API_KEY   — API key for that provider
+//   AI_MODEL     — model id, e.g.:
+//                  Groq:        llama-3.3-70b-versatile
+//                  DigitalOcean: alibaba-qwen3-32b
+// The function calls `${AI_BASE_URL}/chat/completions` with
+// `Authorization: Bearer ${AI_API_KEY}` using the OpenAI-compatible chat
+// completions format. We intentionally do NOT rely on response_format
+// json_object — the JSON parsing fallback below handles plain-text replies.
+// ============================================================================
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
@@ -96,16 +112,17 @@ Rules:
 - answer: anything else, e.g. whose turn it is. Answer from the ledger.
 - Never invent members. Keep replies concise.`;
 
-    const apiKey = process.env["DO_MODEL_ACCESS_KEY"];
-    const model = process.env["DO_MODEL"] || "alibaba-qwen3-32b";
+    const baseUrl = process.env["AI_BASE_URL"];
+    const apiKey = process.env["AI_API_KEY"];
+    const model = process.env["AI_MODEL"];
 
     let parsed: ReturnType<typeof parseModelJson> = null;
     let modelError: string | null = null;
-    if (!apiKey) {
-      modelError = "My brain isn't plugged in yet 🔌 — the group admin needs to add the DO_MODEL_ACCESS_KEY secret.";
+    if (!baseUrl || !apiKey || !model) {
+      modelError = "My brain isn't plugged in yet 🔌 — the group admin needs to add the AI_BASE_URL, AI_API_KEY and AI_MODEL secrets.";
     } else {
       try {
-        const res = await fetch("https://inference.do-ai.run/v1/chat/completions", {
+        const res = await fetch(`${baseUrl.replace(/\/+$/, "")}/chat/completions`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
           body: JSON.stringify({
@@ -120,7 +137,7 @@ Rules:
           }),
         });
         if (!res.ok) {
-          console.error("DO inference error", res.status, await res.text());
+          console.error("AI provider error", res.status, await res.text());
           modelError =
             res.status === 401 || res.status === 403
               ? "I couldn't sign in to my AI brain 🔑 — please check the model access key."
