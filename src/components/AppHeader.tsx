@@ -9,7 +9,8 @@ export function AppHeader() {
           <span className="font-display text-lg font-bold">AjoCorps</span>
         </Link>
         <div className="flex items-center gap-2">
-          <span className="rounded-full bg-accent/40 px-2.5 py-1 text-[11px] font-semibold text-accent-foreground">
+          <span className="rounded-full bg-coral-soft px-2.5 py-1 text-[11px] font-bold text-coral">🧪 Test mode</span>
+          <span className="hidden rounded-full bg-accent/40 px-2.5 py-1 text-[11px] font-semibold text-accent-foreground sm:inline">
             Prototype — no real money moves
           </span>
           <Link to="/about" className="text-sm font-medium text-muted-foreground hover:text-foreground">
