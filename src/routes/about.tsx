@@ -30,6 +30,13 @@ function About() {
         </p>
       </section>
       <section className="card-soft p-5">
+        <h2 className="text-lg font-bold">✅ Verified by Paystack webhook</h2>
+        <p className="mt-1 text-muted-foreground">
+          The AI decides what to do; code validates; only a signed Paystack webhook can confirm money. Cash or transfer claims stay
+          "pending" and never count toward the pot until verified. We run in Paystack test mode only.
+        </p>
+      </section>
+      <section className="card-soft p-5">
         <h2 className="text-lg font-bold">🤝 Why open AI matters for community finance</h2>
         <ul className="mt-2 space-y-2 text-muted-foreground">
           <li>🏠 <b className="text-foreground">Data can stay with the community</b> — your group's money talk doesn't have to leave your hands.</li>

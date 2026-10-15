@@ -7,7 +7,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { askTreasurer } from "@/lib/treasurer.functions";
 import { GroupTabs } from "@/components/GroupTabs";
 import { useGroup } from "@/lib/group-data";
+import { formatNaira } from "@/lib/ajo";
 import { burst } from "@/lib/confetti";
+import { supabase as sbRt } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/g/$groupId/chat")({
   head: () => ({
@@ -22,7 +24,8 @@ export const Route = createFileRoute("/g/$groupId/chat")({
 });
 
 const CHIPS = [
-  { label: "💸 Log a payment", text: "Log a payment: " },
+  { label: "💳 Pay my contribution", text: "I want to pay for " },
+  { label: "💵 Someone paid cash", text: "Paid cash: " },
   { label: "🔄 Whose turn is it?", text: "Whose turn is it to collect this month?" },
   { label: "🙈 Who hasn't paid?", text: "Who hasn't paid this month?" },
   { label: "📜 Write our group rules", text: "Write our group rules" },
@@ -50,6 +53,20 @@ function Chat() {
   });
 
   useEffect(() => {
+    const ch = sbRt
+      .channel(`chat-${groupId}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "chat_messages", filter: `group_id=eq.${groupId}` }, (p) => {
+        qc.invalidateQueries({ queryKey: ["chat", groupId] });
+        const row = p.new as { action?: string; content?: string };
+        if (row.action === "payment_confirmed") burst(!!row.content?.includes("pot is full"));
+      })
+      .subscribe();
+    return () => {
+      sbRt.removeChannel(ch);
+    };
+  }, [groupId, qc]);
+
+  useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [msgs.data, pending]);
   useEffect(() => {
@@ -62,8 +79,7 @@ function Chat() {
     setInput("");
     setPending(t);
     try {
-      const res = await ask({ data: { groupId, message: t } });
-      if (res.action === "log_payment" && res.logged) burst(res.allPaid);
+      await ask({ data: { groupId, message: t } });
     } catch (e) {
       console.error(e);
     } finally {
@@ -114,7 +130,7 @@ function Chat() {
             <button
               key={c.label}
               onClick={() => {
-                if (c.text.endsWith(": ")) {
+                if (c.text.endsWith(": ") || c.text.endsWith(" for ")) {
                   setInput(c.text);
                   inputRef.current?.focus();
                 } else send(c.text);
@@ -166,12 +182,24 @@ function Avatar() {
 }
 
 const ACTION_LABEL: Record<string, string> = {
-  log_payment: "✅ Payment logged",
+  request_payment_link: "💳 Payment link",
+  claim_payment: "⏳ Awaiting confirmation",
+  payment_confirmed: "✅ Verified by Paystack",
   flag_defaulters: "🔔 Reminder list",
   draft_rules: "📜 Group rules",
 };
 
+function parsePay(content: string) {
+  const i = content.lastIndexOf("PAYLINK|");
+  if (i === -1) return { text: content, pay: null };
+  const [, amount, name, ...rest] = content.slice(i).trim().split("|");
+  const url = rest.join("|");
+  if (!url.startsWith("https://")) return { text: content.slice(0, i), pay: null };
+  return { text: content.slice(0, i).trim(), pay: { amount: Number(amount), name: name ?? "", url } };
+}
+
 function Bubble({ m }: { m: Msg }) {
+  const { text, pay } = parsePay(m.content);
   if (m.role === "user")
     return (
       <div className="flex justify-end">
@@ -190,8 +218,23 @@ function Bubble({ m }: { m: Msg }) {
           </span>
         )}
         <div className="prose prose-sm rounded-2xl rounded-bl-sm bg-card px-4 py-2.5 shadow-soft [&_h1]:text-base [&_h2]:text-base [&_li]:my-0.5 [&_ol]:pl-5 [&_p]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal">
-          <ReactMarkdown>{m.content}</ReactMarkdown>
+          <ReactMarkdown>{text}</ReactMarkdown>
         </div>
+        {pay && (
+          <div className="rounded-2xl bg-card p-3 shadow-soft">
+            <a
+              href={pay.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block rounded-2xl bg-hero px-4 py-3 text-center font-display text-lg font-extrabold text-primary-foreground shadow-pop"
+            >
+              🔒 Pay {formatNaira(pay.amount)} securely
+            </a>
+            <p className="mt-2 text-center text-xs text-muted-foreground">
+              For {pay.name} · <span className="font-semibold">Test mode:</span> use Paystack's test card. No real money moves.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

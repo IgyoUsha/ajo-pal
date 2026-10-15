@@ -55,24 +55,36 @@ export type Database = {
           created_at: string
           group_id: string
           id: string
+          is_demo: boolean
           member_id: string
           month: string
+          paystack_reference: string | null
+          source: string
+          status: string
         }
         Insert: {
           amount: number
           created_at?: string
           group_id: string
           id?: string
+          is_demo?: boolean
           member_id: string
           month: string
+          paystack_reference?: string | null
+          source?: string
+          status?: string
         }
         Update: {
           amount?: number
           created_at?: string
           group_id?: string
           id?: string
+          is_demo?: boolean
           member_id?: string
           month?: string
+          paystack_reference?: string | null
+          source?: string
+          status?: string
         }
         Relationships: [
           {
@@ -140,6 +152,54 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_attempts: {
+        Row: {
+          amount: number
+          created_at: string
+          group_id: string
+          id: string
+          member_id: string
+          month: string
+          reference: string
+          status: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          group_id: string
+          id?: string
+          member_id: string
+          month: string
+          reference: string
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          group_id?: string
+          id?: string
+          member_id?: string
+          month?: string
+          reference?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_attempts_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_attempts_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "members"
             referencedColumns: ["id"]
           },
         ]

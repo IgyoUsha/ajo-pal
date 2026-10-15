@@ -10,4 +10,6 @@
 <!-- LOVABLE:END -->
 
 - AI treasurer logic lives in a server function (src/lib/treasurer.functions.ts), not an edge function: the model only proposes an action, server code validates and writes the ledger.
-- Prototype has no auth; tables use open anon read/insert policies — tighten before real use.
+- Prototype has no auth; groups/members/chat use open anon read/insert policies — tighten before real use.
+- Contributions are written only server-side (service role): the anon insert policy was removed so nobody can forge a confirmed payment.
+- Paystack webhook is a TanStack server route at /api/public/paystack-webhook (not an edge function); it verifies HMAC-SHA512 of the raw body and is the only path that sets status 'confirmed'.
