@@ -30,16 +30,17 @@ function Home() {
   const addMember = () => {
     const n = memberInput.trim();
     if (!n) return;
-    if (members.some((m) => m.toLowerCase() === n.toLowerCase())) return toast("Already in the group 😉");
+    if (members.some((m) => m.toLowerCase() === n.toLowerCase())) { toast("Already in the group 😉"); return; }
     setMembers([...members, n]);
     setMemberInput("");
+    return;
   };
 
   const create = async () => {
     const amt = Number(amount);
-    if (!name.trim()) return toast.error("Give your group a name first");
-    if (!(amt > 0)) return toast.error("Monthly amount must be more than ₦0");
-    if (members.length < 2) return toast.error("Add at least 2 members");
+    if (!name.trim()) { toast.error("Give your group a name first"); return; }
+    if (!(amt > 0)) { toast.error("Monthly amount must be more than ₦0"); return; }
+    if (members.length < 2) { toast.error("Add at least 2 members"); return; }
 
     // fun shuffle moment
     const ticks = 8;
@@ -57,12 +58,12 @@ function Home() {
       .single();
     if (g.error || !g.data) {
       setShuffling(null);
-      return toast.error("Couldn't create the group. Please try again.");
+      { toast.error("Couldn't create the group. Please try again."); return; }
     }
     const m = await supabase.from("members").insert(order.map((n, i) => ({ group_id: g.data.id, name: n, payout_order: i + 1 })));
     if (m.error) {
       setShuffling(null);
-      return toast.error("Couldn't add members. Please try again.");
+      { toast.error("Couldn't add members. Please try again."); return; }
     }
     await supabase.from("chat_messages").insert({
       group_id: g.data.id,

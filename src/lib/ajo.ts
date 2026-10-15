@@ -3,14 +3,14 @@ export const formatNaira = (n: number) => "₦" + Math.round(n).toLocaleString("
 export const currentMonth = () => new Date().toISOString().slice(0, 7);
 
 export function addMonths(ym: string, k: number) {
-  const [y, m] = ym.split("-").map(Number);
+  const [y = 2026, m = 1] = ym.split("-").map(Number);
   const d = new Date(Date.UTC(y, m - 1 + k, 1));
   return d.toISOString().slice(0, 7);
 }
 
 export function monthsBetween(a: string, b: string) {
-  const [ay, am] = a.split("-").map(Number);
-  const [by, bm] = b.split("-").map(Number);
+  const [ay = 0, am = 0] = a.split("-").map(Number);
+  const [by = 0, bm = 0] = b.split("-").map(Number);
   return (by - ay) * 12 + (bm - am);
 }
 
@@ -30,7 +30,9 @@ export function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
+    const t = a[i]!;
+    a[i] = a[j]!;
+    a[j] = t;
   }
   return a;
 }
