@@ -22,8 +22,14 @@ function Dashboard() {
   const { data, isLoading, error } = useGroup(groupId);
   const prevPaid = useRef<number | null>(null);
 
-  const paidIds = new Set((data?.contributions ?? []).map((c) => c.member_id));
-  const total = members_total(data?.contributions ?? []);
+  const all = data?.contributions ?? [];
+  const confirmed = all.filter((c) => c.status === "confirmed");
+  const paidIds = new Set(confirmed.map((c) => c.member_id));
+  const pendingRows = all.filter((c) => c.status === "pending" && !paidIds.has(c.member_id));
+  const pendingIds = new Set(pendingRows.map((c) => c.member_id));
+  const paystackIds = new Set(confirmed.filter((c) => c.source === "paystack").map((c) => c.member_id));
+  const total = members_total(confirmed);
+  const pendingTotal = members_total(pendingRows);
   const n = data?.members.length ?? 0;
   const paidCount = data ? data.members.filter((m) => paidIds.has(m.id)).length : 0;
 
@@ -53,7 +59,8 @@ function Dashboard() {
       <section className="rounded-3xl bg-hero p-5 text-primary-foreground shadow-pop">
         <p className="text-sm font-medium opacity-90">Pot this month</p>
         <p className="mt-1 font-display text-4xl font-extrabold">{formatNaira(total)}</p>
-        <p className="text-sm opacity-85">of {formatNaira(expected)} expected</p>
+        <p className="text-sm opacity-85">of {formatNaira(expected)} expected · verified payments only</p>
+        {pendingTotal > 0 && <p className="mt-1 text-xs font-semibold opacity-90">⏳ {formatNaira(pendingTotal)} pending verification</p>}
         <div className="mt-4 h-3 overflow-hidden rounded-full bg-primary-foreground/25">
           <div className="h-full rounded-full bg-accent transition-all duration-700" style={{ width: `${pct}%` }} />
         </div>
@@ -86,21 +93,29 @@ function Dashboard() {
         <ul className="divide-y">
           {members.map((m) => {
             const paid = paidIds.has(m.id);
+            const pend = !paid && pendingIds.has(m.id);
             return (
               <li key={m.id} className="flex items-center justify-between py-2.5">
                 <div className="flex items-center gap-3">
                   <span className="grid h-9 w-9 place-items-center rounded-full bg-primary-soft font-bold text-primary">{m.name[0]}</span>
                   <span className="font-medium">{m.name}</span>
                 </div>
-                <span
-                  className={
-                    paid
-                      ? "rounded-full bg-primary-soft px-3 py-1 text-xs font-bold text-primary"
-                      : "rounded-full bg-coral-soft px-3 py-1 text-xs font-bold text-coral"
-                  }
-                >
-                  {paid ? "Paid ✓" : "Not paid"}
-                </span>
+                <div className="flex items-center gap-1.5">
+                  {paid && paystackIds.has(m.id) && (
+                    <span className="rounded-md bg-foreground px-1.5 py-0.5 text-[10px] font-bold text-background">Paystack</span>
+                  )}
+                  <span
+                    className={
+                      paid
+                        ? "rounded-full bg-primary-soft px-3 py-1 text-xs font-bold text-primary"
+                        : pend
+                          ? "rounded-full bg-accent/40 px-3 py-1 text-xs font-bold text-accent-foreground"
+                          : "rounded-full bg-coral-soft px-3 py-1 text-xs font-bold text-coral"
+                    }
+                  >
+                    {paid ? "Paid ✅ (verified)" : pend ? "Pending ⏳ (awaiting confirmation)" : "Not paid yet"}
+                  </span>
+                </div>
               </li>
             );
           })}
