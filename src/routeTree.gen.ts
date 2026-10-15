@@ -10,33 +10,63 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as GGroupIdIndexRouteImport } from './routes/g.$groupId.index'
+import { Route as GGroupIdChatRouteImport } from './routes/g.$groupId.chat'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GGroupIdIndexRoute = GGroupIdIndexRouteImport.update({
+  id: '/g/$groupId/',
+  path: '/g/$groupId/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GGroupIdChatRoute = GGroupIdChatRouteImport.update({
+  id: '/g/$groupId/chat',
+  path: '/g/$groupId/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/g/$groupId/chat': typeof GGroupIdChatRoute
+  '/g/$groupId/': typeof GGroupIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/g/$groupId/chat': typeof GGroupIdChatRoute
+  '/g/$groupId': typeof GGroupIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/g/$groupId/chat': typeof GGroupIdChatRoute
+  '/g/$groupId/': typeof GGroupIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/about' | '/g/$groupId/chat' | '/g/$groupId/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/about' | '/g/$groupId/chat' | '/g/$groupId'
+  id: '__root__' | '/' | '/about' | '/g/$groupId/chat' | '/g/$groupId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
+  GGroupIdChatRoute: typeof GGroupIdChatRoute
+  GGroupIdIndexRoute: typeof GGroupIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +78,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/g/$groupId/': {
+      id: '/g/$groupId/'
+      path: '/g/$groupId'
+      fullPath: '/g/$groupId/'
+      preLoaderRoute: typeof GGroupIdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/g/$groupId/chat': {
+      id: '/g/$groupId/chat'
+      path: '/g/$groupId/chat'
+      fullPath: '/g/$groupId/chat'
+      preLoaderRoute: typeof GGroupIdChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
+  GGroupIdChatRoute: GGroupIdChatRoute,
+  GGroupIdIndexRoute: GGroupIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
