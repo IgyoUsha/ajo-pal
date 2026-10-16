@@ -1,5 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+import { createPaymentLink } from "@/lib/treasurer.functions";
 import { useGroup } from "@/lib/group-data";
 import { GroupTabs } from "@/components/GroupTabs";
 import { addMonths, collectorFor, formatNaira, monthLabel } from "@/lib/ajo";
@@ -11,6 +15,8 @@ export const Route = createFileRoute("/g/$groupId/")({
       { title: "Group dashboard — AjoWaya" },
       { name: "description", content: "See this month's pot, who has paid, and the payout schedule." },
       { property: "og:title", content: "Group dashboard — AjoWaya" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { property: "og:description", content: "This month's pot, payment status and payout schedule." },
     ],
   }),
@@ -21,6 +27,25 @@ function Dashboard() {
   const { groupId } = Route.useParams();
   const { data, isLoading, error } = useGroup(groupId);
   const prevPaid = useRef<number | null>(null);
+  const makeLink = useServerFn(createPaymentLink);
+  const [paying, setPaying] = useState<string | null>(null);
+
+  const pay = async (memberId: string) => {
+    if (paying) return;
+    setPaying(memberId);
+    try {
+      const r = await makeLink({ data: { groupId, memberId } });
+      if (r.ok) {
+        window.location.assign(r.url);
+        return;
+      }
+      toast(r.error);
+    } catch (e) {
+      console.error(e);
+      toast.error("We couldn't start the payment just now. Please try again.");
+    }
+    setPaying(null);
+  };
 
   const all = data?.contributions ?? [];
   const confirmed = all.filter((c) => c.status === "confirmed");
@@ -39,8 +64,8 @@ function Dashboard() {
     prevPaid.current = paidCount;
   }, [paidCount, n, data]);
 
-  if (isLoading) return <div className="py-20 text-center text-muted-foreground">Counting the pot… 🪙</div>;
-  if (error || !data?.group) return <div className="py-20 text-center">Couldn't find this group 🤷</div>;
+  if (isLoading) return <div className="py-20 text-center text-muted-foreground">Counting the pot…</div>;
+  if (error || !data?.group) return <div className="py-20 text-center">Couldn't find this group.</div>;
 
   const { group, members, month } = data;
   const collector = collectorFor(members, group.start_month, month);
@@ -56,35 +81,37 @@ function Dashboard() {
       </div>
       <GroupTabs groupId={groupId} />
 
-      <section className="rounded-3xl bg-hero p-5 text-primary-foreground shadow-pop">
-        <p className="text-sm font-medium opacity-90">Pot this month</p>
-        <p className="mt-1 font-display text-4xl font-extrabold">{formatNaira(total)}</p>
-        <p className="text-sm opacity-85">of {formatNaira(expected)} expected · verified payments only</p>
-        {pendingTotal > 0 && <p className="mt-1 text-xs font-semibold opacity-90">⏳ {formatNaira(pendingTotal)} pending verification</p>}
-        <div className="mt-4 h-3 overflow-hidden rounded-full bg-primary-foreground/25">
+      <section className="card-soft p-5">
+        <p className="text-sm font-semibold text-muted-foreground">Pot this month</p>
+        <p className="tabular mt-1 font-display text-4xl font-bold">{formatNaira(total)}</p>
+        <p className="tabular text-sm text-muted-foreground">of {formatNaira(expected)} expected · verified payments only</p>
+        {pendingTotal > 0 && (
+          <p className="tabular mt-1 text-sm font-semibold text-accent-foreground">{formatNaira(pendingTotal)} pending verification</p>
+        )}
+        <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuenow={paidCount} aria-valuemin={0} aria-valuemax={n}>
           <div className="h-full rounded-full bg-accent transition-all duration-700" style={{ width: `${pct}%` }} />
         </div>
-        <p className="mt-2 text-sm font-semibold">
-          {allPaid ? "Everyone has paid! 🎉" : `${paidCount} of ${n} paid`}
-        </p>
+        <p className="tabular mt-2 text-sm font-semibold">{allPaid ? "Everyone has paid. Pot is full!" : `${paidCount} of ${n} paid`}</p>
       </section>
 
       {collector && (
-        <section className="card-soft flex items-center gap-4 p-4">
-          <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-accent/50 text-2xl">💰</div>
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Collecting this month</p>
+        <section className="flex items-center gap-4 rounded-2xl border border-accent/60 bg-accent-soft p-4">
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-accent font-display text-lg font-bold text-accent-foreground">
+            {collector.name[0]}
+          </span>
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-wide text-accent-foreground">Collecting this month</p>
             <p className="font-display text-xl font-bold">{collector.name}</p>
-            <p className="text-sm text-muted-foreground">Receives {formatNaira(expected)} when the pot is full</p>
+            <p className="tabular text-sm text-muted-foreground">Receives {formatNaira(expected)} when the pot is full</p>
           </div>
         </section>
       )}
 
       <section className="card-soft p-4">
-        <h2 className="mb-3 text-lg font-bold">Members</h2>
+        <h2 className="mb-1 text-lg font-bold">Members</h2>
         {paidCount === 0 && (
-          <p className="mb-3 rounded-xl bg-coral-soft px-3 py-2 text-sm">
-            Your pot is looking lonely 👀 —{" "}
+          <p className="mb-2 rounded-xl bg-muted px-3 py-2 text-sm">
+            Your pot is looking lonely —{" "}
             <Link to="/g/$groupId/chat" params={{ groupId }} className="font-semibold text-primary underline">
               log the first payment!
             </Link>
@@ -94,36 +121,46 @@ function Dashboard() {
           {members.map((m) => {
             const paid = paidIds.has(m.id);
             const pend = !paid && pendingIds.has(m.id);
+            const isCollector = collector?.id === m.id;
             return (
-              <li key={m.id} className="flex items-center justify-between py-2.5">
-                <div className="flex items-center gap-3">
-                  <span className="grid h-9 w-9 place-items-center rounded-full bg-primary-soft font-bold text-primary">{m.name[0]}</span>
-                  <span className="font-medium">{m.name}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  {paid && paystackIds.has(m.id) && (
-                    <span className="rounded-md bg-foreground px-1.5 py-0.5 text-[10px] font-bold text-background">Paystack</span>
-                  )}
+              <li key={m.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 py-3">
+                <div className="flex min-w-0 items-center gap-3">
                   <span
-                    className={
-                      paid
-                        ? "rounded-full bg-primary-soft px-3 py-1 text-xs font-bold text-primary"
-                        : pend
-                          ? "rounded-full bg-accent/40 px-3 py-1 text-xs font-bold text-accent-foreground"
-                          : "rounded-full bg-coral-soft px-3 py-1 text-xs font-bold text-coral"
-                    }
+                    className={`grid h-9 w-9 shrink-0 place-items-center rounded-full font-bold ${isCollector ? "bg-accent text-accent-foreground" : "bg-primary-soft text-primary"}`}
                   >
-                    {paid ? "Paid ✅ (verified)" : pend ? "Pending ⏳ (awaiting confirmation)" : "Not paid yet"}
+                    {m.name[0]}
                   </span>
+                  <span className="truncate font-semibold">{m.name}</span>
+                </div>
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  {paid ? (
+                    <>
+                      {paystackIds.has(m.id) && <span className="pill border bg-card text-muted-foreground">Paystack</span>}
+                      <span className="pill bg-primary-soft text-primary">Paid · verified</span>
+                    </>
+                  ) : (
+                    <>
+                      {pend ? (
+                        <span className="pill bg-accent-soft text-accent-foreground">Pending</span>
+                      ) : (
+                        <span className="pill bg-muted text-muted-foreground">Not paid</span>
+                      )}
+                      <button onClick={() => pay(m.id)} disabled={!!paying} className="btn btn-primary tabular">
+                        {paying === m.id && <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />}
+                        Pay {formatNaira(Number(group.monthly_amount))}
+                      </button>
+                    </>
+                  )}
                 </div>
               </li>
             );
           })}
         </ul>
+        <p className="mt-2 text-xs text-muted-foreground">Test mode: use Paystack's test card. No real money moves.</p>
       </section>
 
       <section className="card-soft p-4">
-        <h2 className="mb-3 text-lg font-bold">Payout schedule 🗓️</h2>
+        <h2 className="mb-3 text-lg font-bold">Payout schedule</h2>
         <ol className="space-y-2">
           {members.map((m, i) => {
             const mo = addMonths(group.start_month, i);
@@ -131,11 +168,12 @@ function Dashboard() {
             return (
               <li
                 key={m.id}
-                className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm ${isNow ? "bg-accent/40 font-semibold" : "bg-muted"}`}
+                className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm tabular ${isNow ? "border border-accent/60 bg-accent-soft font-semibold" : "bg-muted"}`}
               >
                 <span>{monthLabel(mo)}</span>
                 <span>
-                  {m.name} {isNow && "👈"}
+                  {m.name}
+                  {isNow && <span className="pill ml-2 bg-accent text-accent-foreground">Now</span>}
                 </span>
               </li>
             );
