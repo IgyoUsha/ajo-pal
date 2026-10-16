@@ -15,6 +15,15 @@ export function GroupTabs({ groupId }: { groupId: string }) {
         Dashboard
       </Link>
       <Link
+        to="/g/$groupId/me"
+        params={{ groupId }}
+        className={base}
+        activeProps={{ className: "border bg-card text-foreground" }}
+        inactiveProps={{ className: "text-muted-foreground hover:text-foreground" }}
+      >
+        My Ajo
+      </Link>
+      <Link
         to="/g/$groupId/chat"
         params={{ groupId }}
         className={base}
