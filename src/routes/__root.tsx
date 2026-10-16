@@ -19,9 +19,9 @@ function NotFoundComponent() {
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-6xl font-bold">🙈 404</h1>
+        <h1 className="text-6xl font-bold">404</h1>
         <p className="mt-3 text-muted-foreground">This page wandered off from camp.</p>
-        <Link to="/" className="mt-6 inline-flex rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground">
+        <Link to="/" className="btn btn-primary mt-6">
           Go home
         </Link>
       </div>
@@ -46,11 +46,11 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
               router.invalidate();
               reset();
             }}
-            className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+            className="btn btn-primary"
           >
             Try again
           </button>
-          <a href="/" className="rounded-full border px-4 py-2 text-sm font-semibold">
+          <a href="/" className="btn btn-outline">
             Go home
           </a>
         </div>
@@ -74,7 +74,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:wght@400;500;600;700&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700&family=Figtree:wght@400;500;600;700&display=swap",
       },
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
