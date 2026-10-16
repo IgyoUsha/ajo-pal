@@ -1,61 +1,48 @@
-# Ajo Pal
+# AjoCorps 🟢 — an AI treasurer for NYSC savings groups
 
-Build "AjoCorps" — an AI treasurer for NYSC corps members who run a rotating savings group (ajo/esusu) from their monthly allawee. This is a hackathon prototype for the Hacktoberfest 2026 "Best Open-Source AI Project" challenge, so the AI treasurer is the heart of the product.
+AjoCorps helps NYSC corps members run a rotating savings group (ajo/esusu) from their monthly allawee. Instead of a WhatsApp group and a notebook, members talk to an AI treasurer that keeps the ledger, answers "whose turn is it?", flags who is behind, drafts group rules, and creates payment links. Money is confirmed only by a signed payment webhook, never by the AI.
 
-IMPORTANT: Simulated ledger only. No real payments, no payment gateways, no auth/login. Show a small friendly "Prototype — no real money moves" badge in the header.
+> Prototype. Paystack TEST mode only. No real money moves.
 
-## Look and feel
-Mobile-first (most users are on phones). Playful, friendly fintech tone in the spirit of modern Nigerian savings apps: warm, encouraging microcopy, rounded cards, soft shadows, a few tasteful emojis, celebratory moments (e.g. a small confetti burst when a payment is logged or when everyone in the group has paid for the month), and playful empty states ("Your pot is looking lonely 👀 — log the first payment!"). Use an original brand: primary green inspired by NYSC (#0B8A4A-ish), a warm accent (sunny yellow or coral), off-white background. Clean modern sans-serif font. Language: clear, everyday English (no Pidgin). Amounts formatted in Naira (₦10,000).
+Built for the MLH Hacktoberfest 2026 "Best Open-Source AI Project" challenge.
 
-## Data (Lovable Cloud / Supabase)
-- groups: id, name, monthly_amount, start_month, created_at
-- members: id, group_id, name, payout_order
-- contributions: id, member_id, group_id, month (YYYY-MM), amount, created_at
-- chat_messages: id, group_id, role (user/assistant), content, action (nullable), created_at
+## How open-weight AI is used (the important part)
+The AI treasurer is the core of the product. Every chat message goes to an open-weight model together with the group's current ledger. The model decides what should happen and replies with a strict JSON action:
 
-## Screens
-1. Home / Create group: group name, monthly amount, add member names. Payout order is randomized on creation (show a fun "Shuffling the payout order… 🎲" moment) so nobody can claim favoritism.
-2. Group dashboard: hero card with total pot this month and a progress bar (X of Y paid); "Collecting this month" card showing whose turn it is; member list with paid / not paid status chips; payout schedule (month → member).
-3. Treasurer chat: the main feature. Chat UI with suggestion chips: "Log a payment", "Whose turn is it?", "Who hasn't paid?", "Write our group rules".
+{"action": "request_payment_link" | "claim_payment" | "answer" | "flag_defaulters" | "draft_rules", "member": string | null, "amount": number | null, "reply": string}
 
-## The AI treasurer (core feature)
-Create a Supabase edge function "treasurer" that:
-1. Receives the user's message and group_id.
-2. Loads the group's current ledger (members, payout order, this month's contributions, totals) and the last ~10 chat messages.
-3. Calls DigitalOcean serverless inference (OpenAI-compatible) at https://inference.do-ai.run/v1/chat/completions with Authorization: Bearer from the secret DO_MODEL_ACCESS_KEY. Model ID comes from an optional secret DO_MODEL, defaulting to "alibaba-qwen3-32b" (an open-weight model, Apache 2.0).
-4. System prompt: the model is a friendly, upbeat group treasurer for NYSC corps members. It must reply ONLY with JSON in this shape:
-{"action": "log_payment" | "answer" | "flag_defaulters" | "draft_rules", "member": string | null, "amount": number | null, "reply": string}
-5. Before parsing, strip any <think>...</think> blocks and ``` code fences from the model output. If parsing fails, fall back to action "answer" with a polite error reply.
-6. VALIDATE before executing: for log_payment, the member must exist in the group (case-insensitive match) and amount must be a positive number; otherwise return a friendly clarification instead of writing. Then execute: log_payment inserts a contribution for the current month; flag_defaulters returns members with no contribution this month; draft_rules returns a short group constitution (contribution deadline, late penalty, what happens if someone leaves service early, dispute resolution); answer just replies.
-7. Save both messages to chat_messages and return the reply plus the action taken.
-The model never writes to the database directly — it decides, the code validates and executes. After an action, the dashboard should refresh live (Supabase realtime or refetch).
+- **Model:** openai/gpt-oss-120b (open-weight, Apache 2.0). Model card and license: https://huggingface.co/openai/gpt-oss-120b
+- **Served via:** Groq's OpenAI-compatible API. The provider is fully swappable through three environment secrets (AI_BASE_URL, AI_API_KEY, AI_MODEL), so the same code runs on any OpenAI-compatible host, including DigitalOcean serverless inference or a self-hosted server such as Ollama or vLLM.
+- Without the model, the chat does nothing: it interprets every message and chooses every action.
 
-Please set up the DO_MODEL_ACCESS_KEY secret request so I can paste my key.
+## The agent pattern: the model decides, code validates, a webhook confirms
+1. The model proposes an action as JSON. It never touches the database directly.
+2. Server code strips any <think> blocks or code fences, parses the JSON, and validates it (member must exist, amounts must be positive, no duplicate payments).
+3. Chat can only create a payment link or a PENDING claim ("Chidi paid cash"). Pending claims do not count toward the pot.
+4. Only a signed Paystack webhook (HMAC-SHA512 of the raw body, constant-time compare, idempotent on the payment reference, amount check) can create a CONFIRMED contribution.
 
-## Seed data
-Seed a demo group "Batch C Stream 2 Ajo", monthly amount ₦10,000, 6 members (Amaka, Tunde, Halima, Chidi, Zainab, Emeka) with randomized payout order and 3 of them already paid for the current month, so the demo works instantly.
+Where to look in the code:
+- AI agent loop: src/lib/treasurer.functions.ts
+- Webhook: src/routes/api/public/paystack-webhook.ts
+- Provider config (display): src/config/ai.ts
 
-## Extras
-- Keep the frontend fully client-side so the build output can be hosted as a static site.
-- Add a small "About" page: what AjoCorps is, "Powered by an open-weight model (Qwen3-32B) on DigitalOcean serverless inference", and why open AI matters for community finance (data can stay with the community, self-hostable, no vendor lock-in).
+## Agent skill
+This repo also ships a reusable agent skill that follows the Agent Skills open standard: skills/ajo-treasurer/SKILL.md. Any compatible agent can load it to run an ajo group with the same rules.
 
-This project was built with [Lovable](https://lovable.dev).
+## Why open AI matters here
+This is financial data from young Nigerians. With an open-weight model, a community, a school or NYSC itself could run the same treasurer on its own infrastructure, keep members' records in-country, avoid depending on one company's pricing or policy, and inspect how decisions are made. A closed model cannot offer that.
 
-## Build with Lovable
+## Architecture
+React (TanStack Start) app built with Lovable and hosted on Lovable. Database and realtime updates on Lovable Cloud (Supabase). AI inference through an OpenAI-compatible endpoint. Payments through Paystack test mode.
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/4f99d0d8-07bf-4e0b-a7dd-5bf776a2a69e).
+## Run it yourself
+1. Clone the repo and install dependencies.
+2. Set the secrets: AI_BASE_URL, AI_API_KEY, AI_MODEL, PAYSTACK_SECRET_KEY (a sk_test_ key only).
+3. Point your Paystack test webhook to /api/public/paystack-webhook on your deployed URL.
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+## Limitations (honest)
+- Simulated ledger and test payments only. A real pooled-funds product needs licensed custody and payouts.
+- No user accounts yet; the prototype uses open access for demo purposes.
 
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
-
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
-```
+## License
+MIT. See LICENSE. The model is under its own license (Apache 2.0).
