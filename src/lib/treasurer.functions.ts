@@ -112,9 +112,11 @@ Rules:
 - answer: anything else, e.g. whose turn it is. Answer from the ledger.
 - Never invent members. Keep replies concise.`;
 
-    const baseUrl = process.env["AI_BASE_URL"];
-    const apiKey = process.env["AI_API_KEY"];
-    const model = process.env["AI_MODEL"];
+    const { getSecret } = await import("./runtime-env.server");
+    const baseUrl = await getSecret("AI_BASE_URL");
+    const apiKey = await getSecret("AI_API_KEY");
+    const model = await getSecret("AI_MODEL");
+    console.log("treasurer secrets present", { AI_BASE_URL: !!baseUrl, AI_API_KEY: !!apiKey, AI_MODEL: !!model });
 
     let parsed: ReturnType<typeof parseModelJson> = null;
     let modelError: string | null = null;
@@ -122,17 +124,20 @@ Rules:
       modelError = "My brain isn't plugged in yet 🔌 — the group admin needs to add the AI_BASE_URL, AI_API_KEY and AI_MODEL secrets.";
     } else {
       try {
+        const isQwen = /qwen/i.test(model);
+        const isGptOss = /gpt-oss/i.test(model);
         const res = await fetch(`${baseUrl.replace(/\/+$/, "")}/chat/completions`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
           body: JSON.stringify({
             model,
             temperature: 0.3,
-            max_tokens: 1200,
+            max_tokens: 4096,
+            ...(isGptOss ? { reasoning_effort: "low" } : {}),
             messages: [
               { role: "system", content: system },
               ...history.map((x) => ({ role: x.role as "user" | "assistant", content: x.content })),
-              { role: "user", content: data.message + " /no_think" },
+              { role: "user", content: isQwen ? data.message + " /no_think" : data.message },
             ],
           }),
         });
