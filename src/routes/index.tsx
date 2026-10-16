@@ -6,7 +6,7 @@ import { currentMonth, formatNaira, shuffle } from "@/lib/ajo";
 import { burst } from "@/lib/confetti";
 import { X } from "lucide-react";
 import { HomeDashboard } from "@/components/HomeDashboard";
-import { readMyMemberId, readRememberedGroups, rememberGroup, writeMyMemberId } from "@/lib/me";
+import { readMyMemberId, readRememberedGroups, rememberGroup } from "@/lib/me";
 
 const DEMO_ID = "11111111-1111-1111-1111-111111111111";
 
@@ -35,7 +35,6 @@ function Home() {
   const latestGroup = remembered.find((id) => !!readMyMemberId(id));
 
   const switchIdentity = () => {
-    if (latestGroup) writeMyMemberId(latestGroup, "");
     try {
       if (latestGroup) window.localStorage.removeItem(`ajowaya-me-${latestGroup}`);
     } catch {

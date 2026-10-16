@@ -36,6 +36,7 @@ This is financial data from young Nigerians. With an open-weight model, a commun
 React (TanStack Start) app built with Lovable and hosted on Lovable. Database and realtime updates on Lovable Cloud (Supabase). AI inference through an OpenAI-compatible endpoint. Payments through Paystack test mode.
 
 - My Ajo view: each member sees their verified contributions, pending claims and payout turn. AjoWaya records contributions; it never holds funds.
+- Home dashboard: members see their verified contributions across groups, this month's status and next payout. AjoWaya records contributions; it never holds funds.
 
 ## Run it yourself
 1. Clone the repo and install dependencies.
