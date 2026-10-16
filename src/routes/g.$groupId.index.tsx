@@ -11,7 +11,7 @@ import { useMyMember } from "@/lib/me";
 import { addMonths, collectorFor, formatNaira, monthLabel } from "@/lib/ajo";
 import { burst } from "@/lib/confetti";
 
-export const Route = createFileRoute("/_authenticated/g/$groupId/")({
+export const Route = createFileRoute("/g/$groupId/")({
   head: () => ({
     meta: [
       { title: "Group dashboard — AjoWaya" },

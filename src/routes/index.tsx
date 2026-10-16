@@ -10,7 +10,8 @@ import { readMyMemberId, readRememberedGroups, rememberGroup } from "@/lib/me";
 
 const DEMO_ID = "11111111-1111-1111-1111-111111111111";
 
-export const Route = createFileRoute("/_authenticated/")({
+export const Route = createFileRoute("/")({
+  ssr: false,
   head: () => ({
     meta: [
       { title: "AjoWaya — Start your corps ajo group" },

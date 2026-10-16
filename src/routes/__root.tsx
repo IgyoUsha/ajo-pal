@@ -14,7 +14,6 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppHeader } from "@/components/AppHeader";
 import { Toaster } from "@/components/ui/sonner";
-import { AuthProvider } from "@/components/AuthProvider";
 
 function NotFoundComponent() {
   return (
@@ -105,13 +104,11 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
       <AppHeader />
       <main className="mx-auto max-w-xl px-4 pb-16 pt-5">
         <Outlet />
       </main>
       <Toaster position="top-center" />
-      </AuthProvider>
     </QueryClientProvider>
   );
 }
