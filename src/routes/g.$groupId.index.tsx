@@ -6,6 +6,8 @@ import { Loader2 } from "lucide-react";
 import { createPaymentLink } from "@/lib/treasurer.functions";
 import { useGroup } from "@/lib/group-data";
 import { GroupTabs } from "@/components/GroupTabs";
+import { WhoAreYou, SwitchMember } from "@/components/MemberPicker";
+import { useMyMember } from "@/lib/me";
 import { addMonths, collectorFor, formatNaira, monthLabel } from "@/lib/ajo";
 import { burst } from "@/lib/confetti";
 
@@ -29,6 +31,7 @@ function Dashboard() {
   const prevPaid = useRef<number | null>(null);
   const makeLink = useServerFn(createPaymentLink);
   const [paying, setPaying] = useState<string | null>(null);
+  const { memberId: myId, choose, clear } = useMyMember(groupId);
 
   const pay = async (memberId: string) => {
     if (paying) return;
@@ -81,6 +84,12 @@ function Dashboard() {
       </div>
       <GroupTabs groupId={groupId} />
 
+      {!members.some((m) => m.id === myId) ? (
+        <WhoAreYou members={members} onPick={choose} />
+      ) : (
+        <SwitchMember name={members.find((m) => m.id === myId)!.name} onSwitch={clear} />
+      )}
+
       <section className="card-soft p-5">
         <p className="text-sm font-semibold text-muted-foreground">Pot this month</p>
         <p className="tabular mt-1 font-display text-4xl font-bold">{formatNaira(total)}</p>
@@ -131,6 +140,7 @@ function Dashboard() {
                     {m.name[0]}
                   </span>
                   <span className="truncate font-semibold">{m.name}</span>
+                  {myId === m.id && <span className="pill bg-primary-soft text-primary">You</span>}
                 </div>
                 <div className="flex flex-wrap items-center justify-end gap-2">
                   {paid ? (

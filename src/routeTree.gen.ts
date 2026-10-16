@@ -14,6 +14,7 @@ import { Route as AboutRouteImport } from './routes/about'
 import { Route as ApiPublicPaystackWebhookRouteImport } from './routes/api/public/paystack-webhook'
 import { Route as GGroupIdIndexRouteImport } from './routes/g.$groupId.index'
 import { Route as GGroupIdChatRouteImport } from './routes/g.$groupId.chat'
+import { Route as GGroupIdMeRouteImport } from './routes/g.$groupId.me'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -41,12 +42,18 @@ const GGroupIdChatRoute = GGroupIdChatRouteImport.update({
   path: '/g/$groupId/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GGroupIdMeRoute = GGroupIdMeRouteImport.update({
+  id: '/g/$groupId/me',
+  path: '/g/$groupId/me',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
   '/g/$groupId/chat': typeof GGroupIdChatRoute
+  '/g/$groupId/me': typeof GGroupIdMeRoute
   '/g/$groupId/': typeof GGroupIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
   '/g/$groupId/chat': typeof GGroupIdChatRoute
+  '/g/$groupId/me': typeof GGroupIdMeRoute
   '/g/$groupId': typeof GGroupIdIndexRoute
 }
 export interface FileRoutesById {
@@ -62,6 +70,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
   '/g/$groupId/chat': typeof GGroupIdChatRoute
+  '/g/$groupId/me': typeof GGroupIdMeRoute
   '/g/$groupId/': typeof GGroupIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -71,6 +80,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/api/public/paystack-webhook'
     | '/g/$groupId/chat'
+    | '/g/$groupId/me'
     | '/g/$groupId/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -78,6 +88,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/api/public/paystack-webhook'
     | '/g/$groupId/chat'
+    | '/g/$groupId/me'
     | '/g/$groupId'
   id:
     | '__root__'
@@ -85,6 +96,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/api/public/paystack-webhook'
     | '/g/$groupId/chat'
+    | '/g/$groupId/me'
     | '/g/$groupId/'
   fileRoutesById: FileRoutesById
 }
@@ -93,6 +105,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   ApiPublicPaystackWebhookRoute: typeof ApiPublicPaystackWebhookRoute
   GGroupIdChatRoute: typeof GGroupIdChatRoute
+  GGroupIdMeRoute: typeof GGroupIdMeRoute
   GGroupIdIndexRoute: typeof GGroupIdIndexRoute
 }
 
@@ -133,6 +146,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GGroupIdChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/g/$groupId/me': {
+      id: '/g/$groupId/me'
+      path: '/g/$groupId/me'
+      fullPath: '/g/$groupId/me'
+      preLoaderRoute: typeof GGroupIdMeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -141,6 +161,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   ApiPublicPaystackWebhookRoute: ApiPublicPaystackWebhookRoute,
   GGroupIdChatRoute: GGroupIdChatRoute,
+  GGroupIdMeRoute: GGroupIdMeRoute,
   GGroupIdIndexRoute: GGroupIdIndexRoute,
 }
 export const routeTree = rootRouteImport

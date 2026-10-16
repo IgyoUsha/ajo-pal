@@ -7,6 +7,8 @@ import { SendHorizontal, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { askTreasurer } from "@/lib/treasurer.functions";
 import { GroupTabs } from "@/components/GroupTabs";
+import { WhoAreYou, SwitchMember } from "@/components/MemberPicker";
+import { useMyMember } from "@/lib/me";
 import { useGroup } from "@/lib/group-data";
 import { formatNaira } from "@/lib/ajo";
 import { burst } from "@/lib/confetti";
@@ -45,6 +47,7 @@ function Chat() {
   const [pending, setPending] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const { memberId: myId, choose, clear } = useMyMember(groupId);
 
   const msgs = useQuery({
     queryKey: ["chat", groupId],
@@ -82,7 +85,7 @@ function Chat() {
     setInput("");
     setPending(t);
     try {
-      await ask({ data: { groupId, message: t } });
+      await ask({ data: { groupId, message: t, askingMemberId: myId ?? undefined } });
     } catch (e) {
       console.error(e);
     } finally {
@@ -103,6 +106,12 @@ function Chat() {
         <h1 className="text-2xl font-extrabold">{group.data?.group?.name ?? "…"}</h1>
       </div>
       <GroupTabs groupId={groupId} />
+
+      {group.data?.members && !group.data.members.some((m) => m.id === myId) ? (
+        <WhoAreYou members={group.data.members} onPick={choose} />
+      ) : (
+        group.data?.members && <SwitchMember name={group.data.members.find((m) => m.id === myId)!.name} onSwitch={clear} />
+      )}
 
       <div className="flex-1 space-y-3">
         {list.length === 0 && !pending && (
