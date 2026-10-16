@@ -14,9 +14,9 @@ import { supabase as sbRt } from "@/integrations/supabase/client";
 export const Route = createFileRoute("/g/$groupId/chat")({
   head: () => ({
     meta: [
-      { title: "Treasurer chat — AjoCorps" },
+      { title: "Treasurer chat — AjoWaya" },
       { name: "description", content: "Chat with your group's AI treasurer to log payments and check whose turn it is." },
-      { property: "og:title", content: "Treasurer chat — AjoCorps" },
+      { property: "og:title", content: "Treasurer chat — AjoWaya" },
       { property: "og:description", content: "Your group's friendly AI treasurer, powered by an open-weight model." },
     ],
   }),

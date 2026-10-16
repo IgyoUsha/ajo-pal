@@ -206,7 +206,7 @@ Rules:
                 const r = await fetch("https://api.paystack.co/transaction/initialize", {
                   method: "POST",
                   headers: { "Content-Type": "application/json", Authorization: `Bearer ${secret}` },
-                  body: JSON.stringify({ amount: Math.round(amt * 100), email: `${slug}@ajocorps.demo`, reference, metadata: { group_id: group.id, member_id: mem.id, month } }),
+                  body: JSON.stringify({ amount: Math.round(amt * 100), email: `${slug}@ajowaya.demo`, reference, metadata: { group_id: group.id, member_id: mem.id, month } }),
                 });
                 const j = await r.json();
                 if (r.ok && j?.status) url = j.data?.authorization_url ?? null;

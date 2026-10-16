@@ -64,7 +64,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "AjoCorps — AI treasurer for corps members" },
+      { title: "AjoWaya — AI treasurer for corps members" },
       { name: "description", content: "An open-source AI treasurer for NYSC ajo savings groups." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

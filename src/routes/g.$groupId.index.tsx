@@ -8,9 +8,9 @@ import { burst } from "@/lib/confetti";
 export const Route = createFileRoute("/g/$groupId/")({
   head: () => ({
     meta: [
-      { title: "Group dashboard — AjoCorps" },
+      { title: "Group dashboard — AjoWaya" },
       { name: "description", content: "See this month's pot, who has paid, and the payout schedule." },
-      { property: "og:title", content: "Group dashboard — AjoCorps" },
+      { property: "og:title", content: "Group dashboard — AjoWaya" },
       { property: "og:description", content: "This month's pot, payment status and payout schedule." },
     ],
   }),

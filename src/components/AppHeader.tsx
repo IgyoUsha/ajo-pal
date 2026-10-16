@@ -6,7 +6,7 @@ export function AppHeader() {
       <div className="mx-auto flex max-w-xl items-center justify-between gap-2 px-4 py-3">
         <Link to="/" className="flex items-center gap-2">
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-hero text-lg shadow-soft">🫙</span>
-          <span className="font-display text-lg font-bold">AjoCorps</span>
+          <span className="font-display text-lg font-bold">AjoWaya</span>
         </Link>
         <div className="flex items-center gap-2">
           <span className="rounded-full bg-coral-soft px-2.5 py-1 text-[11px] font-bold text-coral">🧪 Test mode</span>

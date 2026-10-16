@@ -4,9 +4,9 @@ import { AI_PROVIDER } from "@/config/ai";
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About AjoCorps — open-source AI treasurer" },
-      { name: "description", content: "Why AjoCorps uses an open-weight model for community savings groups." },
-      { property: "og:title", content: "About AjoCorps" },
+      { title: "About AjoWaya — open-source AI treasurer" },
+      { name: "description", content: "Why AjoWaya uses an open-weight model for community savings groups." },
+      { property: "og:title", content: "About AjoWaya" },
       { property: "og:description", content: `An open-source AI treasurer for NYSC ajo groups, powered by ${AI_PROVIDER.modelName}.` },
     ],
   }),
@@ -17,9 +17,9 @@ function About() {
   return (
     <div className="space-y-4">
       <section className="rounded-3xl bg-hero p-6 text-primary-foreground shadow-pop">
-        <h1 className="text-3xl font-extrabold">About AjoCorps 🫙</h1>
+        <h1 className="text-3xl font-extrabold">About AjoWaya 🫙</h1>
         <p className="mt-2 opacity-90">
-          AjoCorps is an AI treasurer for NYSC corps members who run a rotating savings group (ajo/esusu) from their monthly allawee.
+          AjoWaya is an AI treasurer for NYSC corps members who run a rotating savings group (ajo/esusu) from their monthly allawee.
           Everyone chips in, one person collects each month, and the treasurer keeps the ledger honest.
         </p>
       </section>
