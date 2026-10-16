@@ -35,6 +35,8 @@ This is financial data from young Nigerians. With an open-weight model, a commun
 ## Architecture
 React (TanStack Start) app built with Lovable and hosted on Lovable. Database and realtime updates on Lovable Cloud (Supabase). AI inference through an OpenAI-compatible endpoint. Payments through Paystack test mode.
 
+- My Ajo view: each member sees their verified contributions, pending claims and payout turn. AjoWaya records contributions; it never holds funds.
+
 ## Run it yourself
 1. Clone the repo and install dependencies.
 2. Set the secrets: AI_BASE_URL, AI_API_KEY, AI_MODEL, PAYSTACK_SECRET_KEY (a sk_test_ key only).
