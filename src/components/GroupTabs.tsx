@@ -1,27 +1,27 @@
 import { Link } from "@tanstack/react-router";
 
 export function GroupTabs({ groupId }: { groupId: string }) {
-  const base = "flex-1 rounded-full py-2 text-center text-sm font-semibold transition-colors";
+  const base = "flex min-h-11 flex-1 items-center justify-center rounded-lg text-sm font-semibold transition-colors";
   return (
-    <nav className="flex gap-1 rounded-full bg-muted p-1">
+    <nav className="flex gap-1 rounded-xl border bg-muted p-1">
       <Link
         to="/g/$groupId"
         params={{ groupId }}
         activeOptions={{ exact: true }}
         className={base}
-        activeProps={{ className: "bg-card text-foreground shadow-soft" }}
-        inactiveProps={{ className: "text-muted-foreground" }}
+        activeProps={{ className: "border bg-card text-foreground" }}
+        inactiveProps={{ className: "text-muted-foreground hover:text-foreground" }}
       >
-        📊 Dashboard
+        Dashboard
       </Link>
       <Link
         to="/g/$groupId/chat"
         params={{ groupId }}
         className={base}
-        activeProps={{ className: "bg-card text-foreground shadow-soft" }}
-        inactiveProps={{ className: "text-muted-foreground" }}
+        activeProps={{ className: "border bg-card text-foreground" }}
+        inactiveProps={{ className: "text-muted-foreground hover:text-foreground" }}
       >
-        💬 Treasurer
+        Treasurer
       </Link>
     </nav>
   );
