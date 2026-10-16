@@ -11,7 +11,7 @@ export function AppHeader() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [signingOut, setSigningOut] = useState(false);
-  const fullName = user?.user_metadata?.full_name;
+  const fullName = user?.user_metadata?.['full_name'];
   const firstName = typeof fullName === "string" ? fullName.trim().split(/\s+/)[0] : "Member";
   const signOut = async () => {
     if (signingOut) return;

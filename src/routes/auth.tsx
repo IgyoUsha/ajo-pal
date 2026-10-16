@@ -6,7 +6,7 @@ import { safeAuthRedirect } from "@/lib/auth-redirect";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
-  validateSearch: (search: Record<string, unknown>) => ({ redirect: safeAuthRedirect(search.redirect) }),
+  validateSearch: (search: Record<string, unknown>) => ({ redirect: safeAuthRedirect(search['redirect']) }),
   beforeLoad: async () => {
     const { data } = await supabase.auth.getUser();
     if (data.user) throw redirect({ to: "/", replace: true });
