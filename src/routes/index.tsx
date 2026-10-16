@@ -10,9 +10,9 @@ const DEMO_ID = "11111111-1111-1111-1111-111111111111";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "AjoCorps — Start your corps ajo group" },
+      { title: "AjoWaya — Start your corps ajo group" },
       { name: "description", content: "Create a rotating savings group for your NYSC batch, with a friendly AI treasurer." },
-      { property: "og:title", content: "AjoCorps — Start your corps ajo group" },
+      { property: "og:title", content: "AjoWaya — Start your corps ajo group" },
       { property: "og:description", content: "Rotating savings for corps members, run by a friendly open-source AI treasurer." },
     ],
   }),

@@ -3,7 +3,7 @@ name: ajo-treasurer
 description: Runs a rotating savings group (ajo/esusu) for a small community such as NYSC corps members. Use when a user wants to create a savings group, request a payment link, report that someone paid, see who has paid or whose turn it is to collect, flag members who are behind, or draft group rules. Never confirms money from chat alone.
 license: MIT
 metadata:
-  project: AjoCorps
+  project: AjoWaya
   version: "0.1"
 ---
 

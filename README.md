@@ -1,6 +1,6 @@
-# AjoCorps 🟢 — an AI treasurer for NYSC savings groups
+# AjoWaya 🟢 — an AI treasurer for NYSC savings groups
 
-AjoCorps helps NYSC corps members run a rotating savings group (ajo/esusu) from their monthly allawee. Instead of a WhatsApp group and a notebook, members talk to an AI treasurer that keeps the ledger, answers "whose turn is it?", flags who is behind, drafts group rules, and creates payment links. Money is confirmed only by a signed payment webhook, never by the AI.
+AjoWaya helps NYSC corps members run a rotating savings group (ajo/esusu) from their monthly allawee. Instead of a WhatsApp group and a notebook, members talk to an AI treasurer that keeps the ledger, answers "whose turn is it?", flags who is behind, drafts group rules, and creates payment links. Money is confirmed only by a signed payment webhook, never by the AI.
 
 > Prototype. Paystack TEST mode only. No real money moves.
 
