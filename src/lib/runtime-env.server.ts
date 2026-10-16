@@ -3,7 +3,8 @@
 export async function getSecret(name: string): Promise<string | undefined> {
   let v: unknown;
   try {
-    const mod = (await import(/* @vite-ignore */ "cloudflare:workers")) as { env?: Record<string, unknown> };
+    const spec = "cloudflare:workers";
+    const mod = (await import(/* @vite-ignore */ spec)) as { env?: Record<string, unknown> };
     v = mod?.env?.[name];
   } catch {
     // not running on workerd (local dev)
