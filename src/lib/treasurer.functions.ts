@@ -114,7 +114,9 @@ export const createPaymentLink = createServerFn({ method: "POST" })
   });
 
 export const askTreasurer = createServerFn({ method: "POST" })
-  .inputValidator((d) => z.object({ groupId: z.string().uuid(), message: z.string().trim().min(1).max(1000) }).parse(d))
+  .inputValidator((d) =>
+    z.object({ groupId: z.string().uuid(), message: z.string().trim().min(1).max(1000), askingMemberId: z.string().uuid().optional() }).parse(d),
+  )
   .handler(async ({ data }) => {
     const sb = db();
     const month = currentMonth();
@@ -149,6 +151,8 @@ export const askTreasurer = createServerFn({ method: "POST" })
       pot_total_this_month: formatNaira(total),
       expected_pot: formatNaira(Number(group.monthly_amount) * members.length),
     };
+    const asking = data.askingMemberId ? members.find((x) => x.id === data.askingMemberId) : undefined;
+    if (asking) (ledger as Record<string, unknown>)["asking_member"] = asking.name;
 
     const system = `You are the friendly, upbeat group treasurer for a rotating savings group (ajo/esusu) run by NYSC corps members from their monthly allawee. Use clear, warm everyday English (no Pidgin), a tasteful emoji now and then, and format money in Naira like ₦10,000.
 
@@ -165,6 +169,7 @@ Rules:
 - flag_defaulters: the user asks who hasn't paid. "reply" is a kind nudge; mention anyone with a pending claim separately.
 - draft_rules: the user asks for group rules/constitution. "reply" is a short markdown constitution covering: contribution deadline, late payment penalty, what happens if someone leaves service early, and dispute resolution.
 - answer: anything else, e.g. whose turn it is. Answer from the ledger.
+- If asking_member is set and the user says "I want to pay" or "my turn" without naming someone, assume they mean asking_member.
 - Never invent members. Keep replies concise.`;
 
     const { getSecret } = await import("./runtime-env.server");

@@ -35,3 +35,37 @@ export function useGroup(groupId: string) {
 
   return q;
 }
+
+// All contributions for one member across every month (My Ajo view).
+export function useMemberHistory(groupId: string, memberId: string | null) {
+  const qc = useQueryClient();
+  const q = useQuery({
+    queryKey: ["my-contribs", groupId, memberId],
+    enabled: !!memberId,
+    queryFn: async () => {
+      const r = await supabase
+        .from("contributions")
+        .select("*")
+        .eq("group_id", groupId)
+        .eq("member_id", memberId!)
+        .order("month", { ascending: false });
+      if (r.error) throw r.error;
+      return r.data ?? [];
+    },
+  });
+
+  useEffect(() => {
+    if (!memberId) return;
+    const ch = supabase
+      .channel(`my-contribs-${groupId}-${memberId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "contributions", filter: `group_id=eq.${groupId}` }, () =>
+        qc.invalidateQueries({ queryKey: ["my-contribs", groupId, memberId] }),
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [groupId, memberId, qc]);
+
+  return q;
+}
