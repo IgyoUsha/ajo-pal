@@ -151,7 +151,11 @@ Rules:
                 : "I hit a snag reaching my AI brain. Please try again shortly.";
         } else {
           const j = await res.json();
-          parsed = parseModelJson(j?.choices?.[0]?.message?.content ?? "");
+          if (j?.choices?.[0]?.finish_reason === "length") {
+            modelError = "I ran out of breath mid-thought 😮‍💨 Let me try that again — please resend your message.";
+          } else {
+            parsed = parseModelJson(j?.choices?.[0]?.message?.content ?? "");
+          }
         }
       } catch (e) {
         console.error(e);
@@ -189,7 +193,7 @@ Rules:
             }
           }
         } else {
-          const secret = process.env["PAYSTACK_SECRET_KEY"];
+          const secret = await getSecret("PAYSTACK_SECRET_KEY");
           if (!secret) reply = "Payments aren't switched on yet 🔌 — the group admin needs to add the PAYSTACK_SECRET_KEY secret.";
           else if (!secret.startsWith("sk_test_")) reply = "For safety I only work with Paystack TEST keys 🧪 — please use an sk_test_ key.";
           else {
