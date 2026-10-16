@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import ReactMarkdown from "react-markdown";
+import { SendHorizontal, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { askTreasurer } from "@/lib/treasurer.functions";
 import { GroupTabs } from "@/components/GroupTabs";
@@ -17,6 +18,8 @@ export const Route = createFileRoute("/g/$groupId/chat")({
       { title: "Treasurer chat — AjoWaya" },
       { name: "description", content: "Chat with your group's AI treasurer to log payments and check whose turn it is." },
       { property: "og:title", content: "Treasurer chat — AjoWaya" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { property: "og:description", content: "Your group's friendly AI treasurer, powered by an open-weight model." },
     ],
   }),
@@ -24,11 +27,11 @@ export const Route = createFileRoute("/g/$groupId/chat")({
 });
 
 const CHIPS = [
-  { label: "💳 Pay my contribution", text: "I want to pay for " },
-  { label: "💵 Someone paid cash", text: "Paid cash: " },
-  { label: "🔄 Whose turn is it?", text: "Whose turn is it to collect this month?" },
-  { label: "🙈 Who hasn't paid?", text: "Who hasn't paid this month?" },
-  { label: "📜 Write our group rules", text: "Write our group rules" },
+  { label: "Who hasn't paid?", text: "Who hasn't paid this month?" },
+  { label: "Whose turn is it?", text: "Whose turn is it to collect this month?" },
+  { label: "Draft group rules", text: "Write our group rules" },
+  { label: "Pay my contribution", text: "I want to pay for " },
+  { label: "Someone paid cash", text: "Paid cash: " },
 ];
 
 type Msg = { id: string; role: string; content: string; action: string | null };
@@ -103,7 +106,7 @@ function Chat() {
 
       <div className="flex-1 space-y-3">
         {list.length === 0 && !pending && (
-          <p className="py-10 text-center text-muted-foreground">Say hi to your treasurer 👋</p>
+          <p className="py-10 text-center text-muted-foreground">Say hi to your treasurer — ask who has paid, or whose turn it is.</p>
         )}
         {list.map((m) => (
           <Bubble key={m.id} m={m} />
@@ -113,7 +116,7 @@ function Chat() {
             <Bubble m={{ id: "p", role: "user", content: pending, action: null }} />
             <div className="flex items-end gap-2">
               <Avatar />
-              <div className="flex gap-1 rounded-2xl rounded-bl-sm bg-card px-4 py-3 shadow-soft">
+              <div className="flex gap-1 rounded-2xl rounded-bl-sm border bg-card px-4 py-3">
                 {[0, 1, 2].map((i) => (
                   <span key={i} className="h-2 w-2 animate-bounce rounded-full bg-primary" style={{ animationDelay: `${i * 120}ms` }} />
                 ))}
@@ -136,7 +139,7 @@ function Chat() {
                 } else send(c.text);
               }}
               disabled={!!pending}
-              className="shrink-0 rounded-full border bg-card px-3 py-1.5 text-sm font-medium shadow-soft disabled:opacity-50"
+              className="inline-flex min-h-11 shrink-0 items-center rounded-full border bg-card px-4 text-sm font-semibold hover:bg-muted disabled:opacity-50"
             >
               {c.label}
             </button>
@@ -147,7 +150,7 @@ function Chat() {
             e.preventDefault();
             send(input);
           }}
-          className="flex items-end gap-2 rounded-3xl border bg-card p-2 shadow-soft"
+          className="flex items-end gap-2 rounded-2xl border bg-card p-2 focus-within:border-primary"
         >
           <textarea
             ref={inputRef}
@@ -162,14 +165,16 @@ function Chat() {
               }
             }}
             placeholder='e.g. "Chidi just paid 10k"'
-            className="max-h-32 min-h-10 flex-1 resize-none bg-transparent px-3 py-2 outline-none"
+            aria-label="Message the treasurer"
+            className="max-h-32 min-h-11 min-w-0 flex-1 resize-none bg-transparent px-3 py-2.5 focus-visible:outline-none"
           />
           <button
             type="submit"
             disabled={!input.trim() || !!pending}
-            className="h-10 shrink-0 rounded-full bg-primary px-4 text-sm font-bold text-primary-foreground disabled:opacity-50"
+            aria-label="Send"
+            className="btn btn-primary w-11 shrink-0 px-0"
           >
-            Send
+            <SendHorizontal className="h-5 w-5" strokeWidth={2} />
           </button>
         </form>
       </div>
@@ -178,15 +183,15 @@ function Chat() {
 }
 
 function Avatar() {
-  return <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-hero text-sm shadow-soft">🫙</span>;
+  return <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary-soft font-display text-sm font-bold text-primary" aria-hidden>A</span>;
 }
 
 const ACTION_LABEL: Record<string, string> = {
-  request_payment_link: "💳 Payment link",
-  claim_payment: "⏳ Awaiting confirmation",
-  payment_confirmed: "✅ Verified by Paystack",
-  flag_defaulters: "🔔 Reminder list",
-  draft_rules: "📜 Group rules",
+  request_payment_link: "Payment link",
+  claim_payment: "Awaiting confirmation",
+  payment_confirmed: "Verified by Paystack",
+  flag_defaulters: "Reminder list",
+  draft_rules: "Group rules",
 };
 
 function parsePay(content: string) {
@@ -213,25 +218,23 @@ function Bubble({ m }: { m: Msg }) {
       <Avatar />
       <div className="max-w-[85%] space-y-1">
         {m.action && ACTION_LABEL[m.action] && (
-          <span className="inline-block rounded-full bg-accent/40 px-2 py-0.5 text-[11px] font-bold text-accent-foreground">
+          <span className={`pill ${m.action === "payment_confirmed" ? "bg-primary-soft text-primary" : "bg-accent-soft text-accent-foreground"}`}>
             {ACTION_LABEL[m.action]}
           </span>
         )}
-        <div className="prose prose-sm rounded-2xl rounded-bl-sm bg-card px-4 py-2.5 shadow-soft [&_h1]:text-base [&_h2]:text-base [&_li]:my-0.5 [&_ol]:pl-5 [&_p]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal">
+        <div className="prose prose-sm rounded-2xl rounded-bl-sm border bg-card px-4 py-2.5 [&_h1]:text-base [&_h2]:text-base [&_li]:my-0.5 [&_ol]:pl-5 [&_p]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal">
           <ReactMarkdown>{text}</ReactMarkdown>
         </div>
         {pay && (
-          <div className="rounded-2xl bg-card p-3 shadow-soft">
-            <a
-              href={pay.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block rounded-2xl bg-hero px-4 py-3 text-center font-display text-lg font-extrabold text-primary-foreground shadow-pop"
-            >
-              🔒 Pay {formatNaira(pay.amount)} securely
+          <div className="card-soft p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Contribution for {pay.name}</p>
+            <p className="tabular mt-0.5 font-display text-2xl font-bold">{formatNaira(pay.amount)}</p>
+            <a href={pay.url} rel="noopener noreferrer" className="btn btn-primary tabular mt-3 w-full">
+              <Lock className="h-4 w-4" strokeWidth={2} />
+              Pay {formatNaira(pay.amount)}
             </a>
             <p className="mt-2 text-center text-xs text-muted-foreground">
-              For {pay.name} · <span className="font-semibold">Test mode:</span> use Paystack's test card. No real money moves.
+              <span className="font-semibold">Test mode:</span> use Paystack's test card. No real money moves.
             </p>
           </div>
         )}

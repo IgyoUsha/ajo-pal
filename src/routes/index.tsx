@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { currentMonth, formatNaira, shuffle } from "@/lib/ajo";
 import { burst } from "@/lib/confetti";
+import { X } from "lucide-react";
 
 const DEMO_ID = "11111111-1111-1111-1111-111111111111";
 
@@ -30,7 +31,7 @@ function Home() {
   const addMember = () => {
     const n = memberInput.trim();
     if (!n) return;
-    if (members.some((m) => m.toLowerCase() === n.toLowerCase())) { toast("Already in the group 😉"); return; }
+    if (members.some((m) => m.toLowerCase() === n.toLowerCase())) { toast("Already in the group"); return; }
     setMembers([...members, n]);
     setMemberInput("");
     return;
@@ -78,16 +79,12 @@ function Home() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-3xl bg-hero p-6 text-primary-foreground shadow-pop">
-        <p className="text-sm font-semibold opacity-90">Hey, corper 👋</p>
-        <h1 className="mt-1 text-3xl font-extrabold leading-tight">Save together from your allawee — no wahala.</h1>
+      <section className="rounded-2xl bg-primary p-6 text-primary-foreground">
+        <p className="text-sm font-semibold opacity-90">Hey, corper</p>
+        <h1 className="mt-1 text-3xl font-bold leading-tight">Save together from your allawee — no wahala.</h1>
         <p className="mt-2 text-sm opacity-90">Your AI treasurer tracks who paid, whose turn it is, and keeps everyone honest.</p>
-        <Link
-          to="/g/$groupId"
-          params={{ groupId: DEMO_ID }}
-          className="mt-5 inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-bold text-accent-foreground"
-        >
-          Try the demo group →
+        <Link to="/g/$groupId" params={{ groupId: DEMO_ID }} className="btn btn-accent mt-5">
+          Try the demo group
         </Link>
       </section>
 
@@ -99,7 +96,7 @@ function Home() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Batch B Stream 1 Ajo"
-            className="w-full rounded-xl border bg-background px-4 py-3 outline-none focus:ring-2 focus:ring-ring"
+            className="field"
           />
         </label>
         <label className="block space-y-1.5">
@@ -108,7 +105,7 @@ function Home() {
             inputMode="numeric"
             value={amount}
             onChange={(e) => setAmount(e.target.value.replace(/[^\d]/g, ""))}
-            className="w-full rounded-xl border bg-background px-4 py-3 outline-none focus:ring-2 focus:ring-ring"
+            className="field"
           />
           {Number(amount) > 0 && <span className="text-xs text-muted-foreground">{formatNaira(Number(amount))} per person each month</span>}
         </label>
@@ -120,23 +117,24 @@ function Home() {
               onChange={(e) => setMemberInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addMember())}
               placeholder="Add a name"
-              className="min-w-0 flex-1 rounded-xl border bg-background px-4 py-3 outline-none focus:ring-2 focus:ring-ring"
+              className="field min-w-0 flex-1"
             />
-            <button onClick={addMember} className="rounded-xl bg-secondary px-4 font-semibold text-secondary-foreground">
+            <button onClick={addMember} className="btn btn-outline">
               Add
             </button>
           </div>
           {members.length === 0 ? (
-            <p className="pt-1 text-sm text-muted-foreground">No one here yet — add your squad 🙌</p>
+            <p className="pt-1 text-sm text-muted-foreground">No one here yet — add your squad.</p>
           ) : (
             <div className="flex flex-wrap gap-2 pt-1">
               {members.map((m) => (
                 <button
                   key={m}
                   onClick={() => setMembers(members.filter((x) => x !== m))}
-                  className="rounded-full bg-primary-soft px-3 py-1 text-sm font-medium text-primary"
+                  aria-label={`Remove ${m}`}
+                  className="inline-flex min-h-11 items-center gap-1.5 rounded-full bg-primary-soft px-3 text-sm font-semibold text-primary hover:bg-primary/15"
                 >
-                  {m} ✕
+                  {m} <X className="h-4 w-4" strokeWidth={2} />
                 </button>
               ))}
             </div>
@@ -145,17 +143,16 @@ function Home() {
         <button
           onClick={create}
           disabled={!!shuffling}
-          className="w-full rounded-full bg-primary py-3.5 font-bold text-primary-foreground shadow-pop disabled:opacity-60"
+          className="btn btn-primary w-full"
         >
-          Create group & shuffle payout order 🎲
+          Create group & shuffle payout order
         </button>
       </section>
 
       {shuffling && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-foreground/40 p-6 backdrop-blur-sm">
           <div className="card-soft w-full max-w-sm p-6 text-center animate-in zoom-in-95">
-            <div className="text-4xl animate-bounce">🎲</div>
-            <h3 className="mt-2 text-lg font-bold">Shuffling the payout order…</h3>
+                        <h3 className="mt-2 text-lg font-bold">Shuffling the payout order…</h3>
             <p className="text-sm text-muted-foreground">Totally random. No favouritism here!</p>
             <ol className="mt-4 space-y-1.5 text-left">
               {shuffling.map((m, i) => (
