@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { currentMonth, formatNaira, shuffle } from "@/lib/ajo";
 import { burst } from "@/lib/confetti";
 import { X } from "lucide-react";
+import { HomeDashboard } from "@/components/HomeDashboard";
+import { readMyMemberId, readRememberedGroups, rememberGroup, writeMyMemberId } from "@/lib/me";
 
 const DEMO_ID = "11111111-1111-1111-1111-111111111111";
 
@@ -27,6 +29,20 @@ function Home() {
   const [memberInput, setMemberInput] = useState("");
   const [members, setMembers] = useState<string[]>([]);
   const [shuffling, setShuffling] = useState<string[] | null>(null);
+  const [, setIdentityTick] = useState(0);
+  const remembered = readRememberedGroups();
+  const hasIdentity = remembered.some((id) => !!readMyMemberId(id));
+  const latestGroup = remembered.find((id) => !!readMyMemberId(id));
+
+  const switchIdentity = () => {
+    if (latestGroup) writeMyMemberId(latestGroup, "");
+    try {
+      if (latestGroup) window.localStorage.removeItem(`ajowaya-me-${latestGroup}`);
+    } catch {
+      /* storage unavailable */
+    }
+    setIdentityTick((t) => t + 1);
+  };
 
   const addMember = () => {
     const n = memberInput.trim();
@@ -61,6 +77,7 @@ function Home() {
       setShuffling(null);
       { toast.error("Couldn't create the group. Please try again."); return; }
     }
+    rememberGroup(g.data.id);
     const m = await supabase.from("members").insert(order.map((n, i) => ({ group_id: g.data.id, name: n, payout_order: i + 1 })));
     if (m.error) {
       setShuffling(null);
@@ -79,6 +96,8 @@ function Home() {
 
   return (
     <div className="space-y-6">
+      {hasIdentity && <HomeDashboard onSwitch={switchIdentity} />}
+
       <section className="rounded-2xl bg-primary p-6 text-primary-foreground">
         <p className="text-sm font-semibold opacity-90">Hey, corper</p>
         <h1 className="mt-1 text-3xl font-bold leading-tight">Save together from your allawee — no wahala.</h1>
@@ -88,7 +107,16 @@ function Home() {
         </Link>
       </section>
 
-      <section className="card-soft space-y-4 p-5">
+      {!hasIdentity && (
+        <section className="card-soft p-4">
+          <p className="text-sm text-muted-foreground">Open the demo group and pick your name to see your savings here.</p>
+          <Link to="/g/$groupId" params={{ groupId: DEMO_ID }} className="btn btn-outline mt-3">
+            Open the demo group
+          </Link>
+        </section>
+      )}
+
+      <section id="create-group" className="card-soft space-y-4 p-5">
         <h2 className="text-xl font-bold">Start a new group</h2>
         <label className="block space-y-1.5">
           <span className="text-sm font-medium">Group name</span>
