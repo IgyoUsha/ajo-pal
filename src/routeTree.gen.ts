@@ -9,16 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AboutRouteImport } from './routes/about'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as ApiPublicPaystackWebhookRouteImport } from './routes/api/public/paystack-webhook'
-import { Route as GGroupIdIndexRouteImport } from './routes/g.$groupId.index'
-import { Route as GGroupIdChatRouteImport } from './routes/g.$groupId.chat'
-import { Route as GGroupIdMeRouteImport } from './routes/g.$groupId.me'
+import { Route as AuthenticatedGGroupIdIndexRouteImport } from './routes/_authenticated/g.$groupId.index'
+import { Route as AuthenticatedGGroupIdChatRouteImport } from './routes/_authenticated/g.$groupId.chat'
+import { Route as AuthenticatedGGroupIdMeRouteImport } from './routes/_authenticated/g.$groupId.me'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -26,96 +27,114 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const ApiPublicPaystackWebhookRoute =
   ApiPublicPaystackWebhookRouteImport.update({
     id: '/api/public/paystack-webhook',
     path: '/api/public/paystack-webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
-const GGroupIdIndexRoute = GGroupIdIndexRouteImport.update({
-  id: '/g/$groupId/',
-  path: '/g/$groupId/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GGroupIdChatRoute = GGroupIdChatRouteImport.update({
-  id: '/g/$groupId/chat',
-  path: '/g/$groupId/chat',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GGroupIdMeRoute = GGroupIdMeRouteImport.update({
+const AuthenticatedGGroupIdIndexRoute =
+  AuthenticatedGGroupIdIndexRouteImport.update({
+    id: '/g/$groupId/',
+    path: '/g/$groupId/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedGGroupIdChatRoute =
+  AuthenticatedGGroupIdChatRouteImport.update({
+    id: '/g/$groupId/chat',
+    path: '/g/$groupId/chat',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedGGroupIdMeRoute = AuthenticatedGGroupIdMeRouteImport.update({
   id: '/g/$groupId/me',
   path: '/g/$groupId/me',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof AuthenticatedIndexRoute
   '/about': typeof AboutRoute
+  '/auth': typeof AuthRoute
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
-  '/g/$groupId/chat': typeof GGroupIdChatRoute
-  '/g/$groupId/me': typeof GGroupIdMeRoute
-  '/g/$groupId/': typeof GGroupIdIndexRoute
+  '/g/$groupId/chat': typeof AuthenticatedGGroupIdChatRoute
+  '/g/$groupId/me': typeof AuthenticatedGGroupIdMeRoute
+  '/g/$groupId/': typeof AuthenticatedGGroupIdIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/auth': typeof AuthRoute
+  '/': typeof AuthenticatedIndexRoute
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
-  '/g/$groupId/chat': typeof GGroupIdChatRoute
-  '/g/$groupId/me': typeof GGroupIdMeRoute
-  '/g/$groupId': typeof GGroupIdIndexRoute
+  '/g/$groupId/chat': typeof AuthenticatedGGroupIdChatRoute
+  '/g/$groupId/me': typeof AuthenticatedGGroupIdMeRoute
+  '/g/$groupId': typeof AuthenticatedGGroupIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/about': typeof AboutRoute
+  '/auth': typeof AuthRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
   '/api/public/paystack-webhook': typeof ApiPublicPaystackWebhookRoute
-  '/g/$groupId/chat': typeof GGroupIdChatRoute
-  '/g/$groupId/me': typeof GGroupIdMeRoute
-  '/g/$groupId/': typeof GGroupIdIndexRoute
+  '/_authenticated/g/$groupId/chat': typeof AuthenticatedGGroupIdChatRoute
+  '/_authenticated/g/$groupId/me': typeof AuthenticatedGGroupIdMeRoute
+  '/_authenticated/g/$groupId/': typeof AuthenticatedGGroupIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/about'
+    | '/auth'
     | '/api/public/paystack-webhook'
     | '/g/$groupId/chat'
     | '/g/$groupId/me'
     | '/g/$groupId/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/about'
+    | '/auth'
+    | '/'
     | '/api/public/paystack-webhook'
     | '/g/$groupId/chat'
     | '/g/$groupId/me'
     | '/g/$groupId'
   id:
     | '__root__'
-    | '/'
+    | '/_authenticated'
     | '/about'
+    | '/auth'
+    | '/_authenticated/'
     | '/api/public/paystack-webhook'
-    | '/g/$groupId/chat'
-    | '/g/$groupId/me'
-    | '/g/$groupId/'
+    | '/_authenticated/g/$groupId/chat'
+    | '/_authenticated/g/$groupId/me'
+    | '/_authenticated/g/$groupId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AboutRoute: typeof AboutRoute
+  AuthRoute: typeof AuthRoute
   ApiPublicPaystackWebhookRoute: typeof ApiPublicPaystackWebhookRoute
-  GGroupIdChatRoute: typeof GGroupIdChatRoute
-  GGroupIdMeRoute: typeof GGroupIdMeRoute
-  GGroupIdIndexRoute: typeof GGroupIdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -125,6 +144,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/': {
+      id: '/_authenticated/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/paystack-webhook': {
       id: '/api/public/paystack-webhook'
       path: '/api/public/paystack-webhook'
@@ -132,37 +165,52 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaystackWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/g/$groupId/': {
-      id: '/g/$groupId/'
+    '/_authenticated/g/$groupId/': {
+      id: '/_authenticated/g/$groupId/'
       path: '/g/$groupId'
       fullPath: '/g/$groupId/'
-      preLoaderRoute: typeof GGroupIdIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedGGroupIdIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/g/$groupId/chat': {
-      id: '/g/$groupId/chat'
+    '/_authenticated/g/$groupId/chat': {
+      id: '/_authenticated/g/$groupId/chat'
       path: '/g/$groupId/chat'
       fullPath: '/g/$groupId/chat'
-      preLoaderRoute: typeof GGroupIdChatRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedGGroupIdChatRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/g/$groupId/me': {
-      id: '/g/$groupId/me'
+    '/_authenticated/g/$groupId/me': {
+      id: '/_authenticated/g/$groupId/me'
       path: '/g/$groupId/me'
       fullPath: '/g/$groupId/me'
-      preLoaderRoute: typeof GGroupIdMeRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedGGroupIdMeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedGGroupIdChatRoute: typeof AuthenticatedGGroupIdChatRoute
+  AuthenticatedGGroupIdMeRoute: typeof AuthenticatedGGroupIdMeRoute
+  AuthenticatedGGroupIdIndexRoute: typeof AuthenticatedGGroupIdIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedGGroupIdChatRoute: AuthenticatedGGroupIdChatRoute,
+  AuthenticatedGGroupIdMeRoute: AuthenticatedGGroupIdMeRoute,
+  AuthenticatedGGroupIdIndexRoute: AuthenticatedGGroupIdIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AboutRoute: AboutRoute,
+  AuthRoute: AuthRoute,
   ApiPublicPaystackWebhookRoute: ApiPublicPaystackWebhookRoute,
-  GGroupIdChatRoute: GGroupIdChatRoute,
-  GGroupIdMeRoute: GGroupIdMeRoute,
-  GGroupIdIndexRoute: GGroupIdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

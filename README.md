@@ -45,7 +45,8 @@ React (TanStack Start) app built with Lovable and hosted on Lovable. Database an
 
 ## Limitations (honest)
 - Simulated ledger and test payments only. A real pooled-funds product needs licensed custody and payouts.
-- No user accounts yet; the prototype uses open access for demo purposes.
+- Accounts are demo-grade; the prototype still uses open data access.
+- Demo authentication: Sign-in is email + password with auto-confirmed accounts, for demo purposes. Data access rules are still open, and accounts are not yet linked to members.
 
 ## License
 MIT. See LICENSE. The model is under its own license (Apache 2.0).

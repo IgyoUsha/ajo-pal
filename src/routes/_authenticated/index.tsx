@@ -10,11 +10,13 @@ import { readMyMemberId, readRememberedGroups, rememberGroup } from "@/lib/me";
 
 const DEMO_ID = "11111111-1111-1111-1111-111111111111";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [
       { title: "AjoWaya — Start your corps ajo group" },
       { name: "description", content: "Create a rotating savings group for your NYSC batch, with a friendly AI treasurer." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { property: "og:title", content: "AjoWaya — Start your corps ajo group" },
       { property: "og:description", content: "Rotating savings for corps members, run by a friendly open-source AI treasurer." },
     ],

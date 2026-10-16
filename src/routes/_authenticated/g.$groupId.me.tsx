@@ -10,7 +10,7 @@ import { WhoAreYou, SwitchMember } from "@/components/MemberPicker";
 import { useMyMember } from "@/lib/me";
 import { addMonths, collectorFor, currentMonth, formatNaira, monthLabel, monthsBetween } from "@/lib/ajo";
 
-export const Route = createFileRoute("/g/$groupId/me")({
+export const Route = createFileRoute("/_authenticated/g/$groupId/me")({
   head: () => ({
     meta: [
       { title: "My Ajo — AjoWaya" },
