@@ -58,6 +58,61 @@ export function parseModelJson(raw: string): { action: Action; member: string | 
   }
 }
 
+// Shared Paystack-link logic used by BOTH the AI request_payment_link path and
+// the dashboard Pay button, so behavior is identical. Never logs secrets.
+async function createPaystackLink(
+  groupId: string,
+  mem: { id: string; name: string },
+  month: string,
+  amt: number,
+): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  const { getSecret } = await import("./runtime-env.server");
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const secret = await getSecret("PAYSTACK_SECRET_KEY");
+  if (!secret) return { ok: false, error: "Payments aren't switched on yet 🔌 — the group admin needs to add the PAYSTACK_SECRET_KEY secret." };
+  if (!secret.startsWith("sk_test_")) return { ok: false, error: "For safety I only work with Paystack TEST keys 🧪 — please use an sk_test_ key." };
+  const reference = `ajo_${crypto.randomUUID().replace(/-/g, "")}`;
+  const slug = mem.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "member";
+  const att = await supabaseAdmin.from("payment_attempts").insert({ group_id: groupId, member_id: mem.id, month, amount: amt, reference });
+  let url: string | null = null;
+  if (!att.error) {
+    try {
+      const r = await fetch("https://api.paystack.co/transaction/initialize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${secret}` },
+        body: JSON.stringify({ amount: Math.round(amt * 100), email: `${slug}@ajowaya.demo`, reference, metadata: { group_id: groupId, member_id: mem.id, month } }),
+      });
+      const j = await r.json();
+      if (r.ok && j?.status) url = j.data?.authorization_url ?? null;
+      else console.error("Paystack init error", r.status, j?.message);
+    } catch (e) {
+      console.error(e);
+    }
+  } else console.error(att.error);
+  if (!url) return { ok: false, error: "I couldn't create a payment link just now 😕 Please try again in a moment." };
+  return { ok: true, url };
+}
+
+export const createPaymentLink = createServerFn({ method: "POST" })
+  .inputValidator((d) => z.object({ groupId: z.string().uuid(), memberId: z.string().uuid() }).parse(d))
+  .handler(async ({ data }) => {
+    const sb = db();
+    const month = currentMonth();
+    const [g, m, c] = await Promise.all([
+      sb.from("groups").select("id,monthly_amount").eq("id", data.groupId).maybeSingle(),
+      sb.from("members").select("id,name,group_id").eq("id", data.memberId).eq("group_id", data.groupId).maybeSingle(),
+      sb.from("contributions").select("member_id,status").eq("group_id", data.groupId).eq("member_id", data.memberId).eq("month", month).eq("status", "confirmed"),
+    ]);
+    if (!g.data) return { ok: false as const, error: "We couldn't find this group." };
+    if (!m.data) return { ok: false as const, error: "That person isn't a member of this group." };
+    const amt = Number(g.data.monthly_amount);
+    if ((c.data ?? []).length > 0)
+      return { ok: false as const, alreadyPaid: true, error: `${m.data.name} has already paid for ${monthLabel(month)}. Nothing more to do!` };
+    const link = await createPaystackLink(g.data.id, m.data, month, amt);
+    if (!link.ok) return { ok: false as const, error: link.error };
+    return { ok: true as const, url: link.url, amount: amt, memberName: m.data.name };
+  });
+
 export const askTreasurer = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ groupId: z.string().uuid(), message: z.string().trim().min(1).max(1000) }).parse(d))
   .handler(async ({ data }) => {
@@ -193,33 +248,11 @@ Rules:
             }
           }
         } else {
-          const secret = await getSecret("PAYSTACK_SECRET_KEY");
-          if (!secret) reply = "Payments aren't switched on yet 🔌 — the group admin needs to add the PAYSTACK_SECRET_KEY secret.";
-          else if (!secret.startsWith("sk_test_")) reply = "For safety I only work with Paystack TEST keys 🧪 — please use an sk_test_ key.";
+          const link = await createPaystackLink(group.id, mem, month, amt);
+          if (!link.ok) reply = link.error;
           else {
-            const reference = `ajo_${crypto.randomUUID().replace(/-/g, "")}`;
-            const slug = mem.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "member";
-            const att = await supabaseAdmin.from("payment_attempts").insert({ group_id: group.id, member_id: mem.id, month, amount: amt, reference });
-            let url: string | null = null;
-            if (!att.error) {
-              try {
-                const r = await fetch("https://api.paystack.co/transaction/initialize", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json", Authorization: `Bearer ${secret}` },
-                  body: JSON.stringify({ amount: Math.round(amt * 100), email: `${slug}@ajowaya.demo`, reference, metadata: { group_id: group.id, member_id: mem.id, month } }),
-                });
-                const j = await r.json();
-                if (r.ok && j?.status) url = j.data?.authorization_url ?? null;
-                else console.error("Paystack init error", r.status, j);
-              } catch (e) {
-                console.error(e);
-              }
-            } else console.error(att.error);
-            if (!url) reply = "I couldn't create a payment link just now 😕 Please try again in a moment.";
-            else {
-              action = "request_payment_link";
-              reply = `${parsed.reply}\n\nPAYLINK|${amt}|${mem.name}|${url}`;
-            }
+            action = "request_payment_link";
+            reply = `${parsed.reply}\n\nPAYLINK|${amt}|${mem.name}|${link.url}`;
           }
         }
       } else if (parsed.action === "flag_defaulters") {
