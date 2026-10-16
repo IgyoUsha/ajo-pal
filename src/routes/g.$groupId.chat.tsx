@@ -14,7 +14,7 @@ import { formatNaira } from "@/lib/ajo";
 import { burst } from "@/lib/confetti";
 import { supabase as sbRt } from "@/integrations/supabase/client";
 
-export const Route = createFileRoute("/_authenticated/g/$groupId/chat")({
+export const Route = createFileRoute("/g/$groupId/chat")({
   head: () => ({
     meta: [
       { title: "Treasurer chat — AjoWaya" },
