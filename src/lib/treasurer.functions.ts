@@ -152,7 +152,7 @@ export const askTreasurer = createServerFn({ method: "POST" })
       expected_pot: formatNaira(Number(group.monthly_amount) * members.length),
     };
     const asking = data.askingMemberId ? members.find((x) => x.id === data.askingMemberId) : undefined;
-    if (asking) (ledger as Record<string, unknown>).asking_member = asking.name;
+    if (asking) (ledger as Record<string, unknown>)["asking_member"] = asking.name;
 
     const system = `You are the friendly, upbeat group treasurer for a rotating savings group (ajo/esusu) run by NYSC corps members from their monthly allawee. Use clear, warm everyday English (no Pidgin), a tasteful emoji now and then, and format money in Naira like ₦10,000.
 
